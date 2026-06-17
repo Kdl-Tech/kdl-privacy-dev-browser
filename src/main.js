@@ -8,6 +8,11 @@ const { execFile } = require('child_process');
 
 const isDev = process.argv.includes('--dev');
 
+// Session réellement utilisée par les <webview> (doit matcher la partition de l'UI).
+const PARTITION = 'persist:kdl';
+const browseSession = () => session.fromPartition(PARTITION);
+const DL_DIR = path.join(os.homedir(), 'Bureau', 'kdl-telechargements');
+
 // --- Confidentialité : pas de télémétrie, blocage cookies tiers optionnel ---
 app.setPath('userData', path.join(app.getPath('userData')));
 
@@ -55,9 +60,25 @@ function setThirdPartyCookieBlock(enabled) {
 
 app.whenReady().then(() => {
   // Durcissement : interdire toute permission web sensible par défaut (caméra, micro, géoloc, notifications).
-  session.defaultSession.setPermissionRequestHandler((wc, permission, cb) => {
+  const denyHandler = (wc, permission, cb) => {
     const allowed = ['fullscreen', 'clipboard-sanitized-write'];
     cb(allowed.includes(permission));
+  };
+  session.defaultSession.setPermissionRequestHandler(denyHandler);
+  browseSession().setPermissionRequestHandler(denyHandler);
+
+  // Téléchargements : dossier dédié, aucune exécution/ouverture auto.
+  browseSession().on('will-download', (_e, item) => {
+    fs.mkdirSync(DL_DIR, { recursive: true });
+    const target = path.join(DL_DIR, item.getFilename());
+    item.setSavePath(target);
+    item.once('done', (_ev, state) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('kdl:download', {
+          state, file: target, name: item.getFilename()
+        });
+      }
+    });
   });
 
   createWindow();
@@ -75,9 +96,11 @@ app.on('window-all-closed', () => {
 // IPC
 // ---------------------------------------------------------------------------
 
-// Nettoyer les données du site courant (cache + storage de la session).
+// Nettoyer les données du site courant (cache + storage) — sur la session de navigation
+// (persist:kdl), pas defaultSession : c'est là que vivent réellement cookies/cache des pages.
+// Les favoris/préférences (localStorage de l'UI = defaultSession) ne sont donc pas touchés.
 ipcMain.handle('kdl:clear-site-data', async (_e, origin) => {
-  const ses = session.defaultSession;
+  const ses = browseSession();
   const opts = { storages: ['cookies', 'localstorage', 'caches', 'cachestorage', 'indexdb', 'serviceworkers', 'shadercache', 'websql'] };
   if (origin) opts.origin = origin;
   await ses.clearStorageData(opts);
@@ -85,11 +108,46 @@ ipcMain.handle('kdl:clear-site-data', async (_e, origin) => {
   return { ok: true, origin: origin || 'all' };
 });
 
-// Effacer toutes les données à la demande (fermeture / bouton).
+// Effacer toutes les données de navigation (fermeture / bouton) — persist:kdl uniquement.
 ipcMain.handle('kdl:clear-all', async () => {
-  await session.defaultSession.clearStorageData();
-  await session.defaultSession.clearCache();
+  const ses = browseSession();
+  await ses.clearStorageData();
+  await ses.clearCache();
   return { ok: true };
+});
+
+// Ouverture externe contrôlée (lien GitHub « À propos », etc.).
+ipcMain.handle('kdl:open-external', (_e, url) => {
+  if (/^https?:\/\//i.test(url)) { shell.openExternal(url); return { ok: true }; }
+  return { ok: false };
+});
+
+// Métadonnées « À propos ».
+ipcMain.handle('kdl:about', () => ({ name: 'KDL Privacy Dev Browser', version: app.getVersion() }));
+
+// Export favoris -> fichier JSON local (aucun cloud).
+ipcMain.handle('kdl:export-favs', async (_e, data) => {
+  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+    title: 'Exporter les favoris',
+    defaultPath: path.join(os.homedir(), 'Bureau', 'kdl-favoris.json'),
+    filters: [{ name: 'JSON', extensions: ['json'] }]
+  });
+  if (canceled || !filePath) return { ok: false, canceled: true };
+  try { fs.writeFileSync(filePath, JSON.stringify(data, null, 2)); return { ok: true, file: filePath }; }
+  catch (err) { return { ok: false, error: String(err) }; }
+});
+
+// Import favoris depuis un fichier JSON local (renvoie le tableau brut ; validation côté renderer).
+ipcMain.handle('kdl:import-favs', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+    title: 'Importer des favoris', properties: ['openFile'], filters: [{ name: 'JSON', extensions: ['json'] }]
+  });
+  if (canceled || !filePaths || !filePaths[0]) return { ok: false, canceled: true };
+  try {
+    const data = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'));
+    if (!Array.isArray(data)) return { ok: false, error: 'format invalide (tableau attendu)' };
+    return { ok: true, data };
+  } catch (err) { return { ok: false, error: String(err) }; }
 });
 
 // Capture d'écran de la page (webContents du <webview>).

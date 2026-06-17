@@ -9,5 +9,10 @@ contextBridge.exposeInMainWorld('kdl', {
   screenshot: (wcId) => ipcRenderer.invoke('kdl:screenshot', wcId),
   thirdPartyCookies: (enabled) => ipcRenderer.invoke('kdl:third-party-cookies', enabled),
   detectTor: () => ipcRenderer.invoke('kdl:detect-tor'),
-  openTor: (url) => ipcRenderer.invoke('kdl:open-tor', url)
+  openTor: (url) => ipcRenderer.invoke('kdl:open-tor', url),
+  openExternal: (url) => ipcRenderer.invoke('kdl:open-external', url),
+  about: () => ipcRenderer.invoke('kdl:about'),
+  exportFavs: (data) => ipcRenderer.invoke('kdl:export-favs', data),
+  importFavs: () => ipcRenderer.invoke('kdl:import-favs'),
+  onDownload: (cb) => ipcRenderer.on('kdl:download', (_e, info) => cb(info))
 });
