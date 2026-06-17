@@ -1,6 +1,6 @@
 {
   "name": "kdl-privacy-dev-browser",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "KDL Privacy Dev Browser — navigateur léger orienté développeur, confidentialité et audit web.",
   "main": "src/main.js",
   "author": "KDL-TECH",
