@@ -81,6 +81,11 @@ function wireTab(tab) {
   wv.addEventListener('did-navigate', onNav);
   wv.addEventListener('did-navigate-in-page', (e) => { tab.url = e.url; if (isActive(tab)) updateBar(e.url); });
   wv.addEventListener('new-window', (e) => { if (/^https?:/i.test(e.url)) createTab(e.url); });
+  // Recherche centrale de la page d'accueil : schéma sentinelle -> routage sécurisé du parent.
+  wv.addEventListener('will-navigate', (e) => {
+    const m = e.url && e.url.match(/^kdlgo:\/\/q\/(.*)$/i);
+    if (m) { try { wv.stop(); } catch { /* */ } navigate(decodeURIComponent(m[1])); }
+  });
 }
 
 function activate(id) {
@@ -193,10 +198,9 @@ function renderFavsPanel(filter = '') {
           <button data-edit="${gi}" title="Éditer">✎</button>
           <button data-del="${gi}" title="Supprimer">🗑</button></div>`;
       }).join('')
-    : '<small class="muted">Aucun favori.</small>';
+    : '<div class="empty">Aucun favori pour l’instant.<br>Ajoutez la page courante avec ☆ ou Ctrl+D.</div>';
   showPanel('Favoris', `
-    <input id="fav-search" type="text" placeholder="Rechercher…" value="${esc(filter)}"
-      style="width:100%;height:30px;margin-bottom:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--fg);padding:0 8px;outline:none;" />
+    <input id="fav-search" class="input" type="text" placeholder="Rechercher un favori…" value="${esc(filter)}" style="margin-bottom:10px" />
     <div id="fav-list">${list}</div>
     <button id="fav-export" class="btn-full">Exporter (JSON)</button>
     <button id="fav-import" class="btn-full">Importer (JSON)</button>
@@ -221,9 +225,9 @@ function editFav(i, filter) {
   const f = getFavs()[i]; if (!f) return;
   showPanel('Éditer le favori', `
     <div class="field"><label>Titre</label></div>
-    <input id="ef-title" type="text" value="${esc(f.title)}" style="width:100%;height:30px;margin-bottom:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--fg);padding:0 8px;outline:none;" />
+    <input id="ef-title" class="input" type="text" value="${esc(f.title)}" />
     <div class="field"><label>URL</label></div>
-    <input id="ef-url" type="text" value="${esc(f.url)}" style="width:100%;height:30px;margin-bottom:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--fg);padding:0 8px;outline:none;" />
+    <input id="ef-url" class="input" type="text" value="${esc(f.url)}" />
     <button id="ef-save" class="btn-full btn-accent">Enregistrer</button>
     <button id="ef-cancel" class="btn-full">Annuler</button>
   `);
@@ -358,8 +362,7 @@ async function openOnionPanel(prefill = '') {
     <div class="notice"><b>Usage légal uniquement.</b> Cet outil ne sert qu'à la recherche
       d'informations licites. Les .onion ne sont jamais ouverts dans ce navigateur.</div>
     <div class="row"><span class="k">État Tor</span><span class="v">${torLine}</span></div>
-    <input id="onion-q" type="text" placeholder="Termes de recherche Ahmia" value="${esc(prefill)}"
-      style="width:100%;height:32px;margin-top:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--fg);padding:0 8px;outline:none;" />
+    <input id="onion-q" class="input" type="text" placeholder="Termes de recherche Ahmia" value="${esc(prefill)}" style="margin-top:10px" />
     <button id="onion-go" class="btn-full btn-accent">Rechercher (page publique Ahmia)</button>
     <button id="onion-tor" class="btn-full">${tor.found ? 'Ouvrir Ahmia dans Tor Browser' : 'Tor Browser introuvable'}</button>
     <small class="muted">Une adresse .onion saisie dans la barre affiche un avertissement et propose Tor Browser uniquement.</small>

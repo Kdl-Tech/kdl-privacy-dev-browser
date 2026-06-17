@@ -4,34 +4,66 @@
   <meta charset="UTF-8" />
   <title>KDL Privacy Dev Browser</title>
   <style>
-    :root{--bg:#15171c;--fg:#d6dae3;--muted:#8b93a3;--accent:#1fb6c9;--bg2:#1d2027;--border:#2e333d;}
+    :root{--bg:#15171c;--bg2:#1d2027;--bg3:#262a33;--fg:#e7eaf0;--muted:#8b93a3;--accent:#1fb6c9;--border:#2b303a;}
     *{box-sizing:border-box;}
-    body{margin:0;min-height:100vh;background:radial-gradient(900px 500px at 50% -10%,#1b2733,var(--bg));
-      color:var(--fg);font:14px/1.5 system-ui,sans-serif;display:flex;flex-direction:column;
-      align-items:center;justify-content:center;padding:40px;}
-    h1{font-size:30px;margin:0 0 4px;letter-spacing:.5px;}
-    h1 span{color:var(--accent);}
-    .sub{color:var(--muted);margin-bottom:28px;}
-    .grid{display:grid;grid-template-columns:repeat(2,minmax(180px,260px));gap:14px;width:100%;max-width:560px;}
-    .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;}
-    .card b{color:#fff;}
-    .card p{margin:6px 0 0;color:var(--muted);font-size:12.5px;}
-    footer{margin-top:30px;color:var(--muted);font-size:11.5px;text-align:center;max-width:560px;}
-    a{color:var(--accent);text-decoration:none;}
+    body{margin:0;min-height:100vh;background:radial-gradient(1100px 520px at 50% -120px,#1a2733,var(--bg));
+      color:var(--fg);font:14px/1.55 system-ui,"Segoe UI",Roboto,sans-serif;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
+    .brand{display:flex;align-items:center;gap:10px;margin-bottom:26px;opacity:.92;}
+    .ring{width:34px;height:34px;border-radius:50%;border:2.5px solid var(--accent);
+      display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 16px rgba(31,182,201,.22);}
+    .brand h1{font-size:18px;margin:0;letter-spacing:.3px;font-weight:600;}
+    .brand b{color:var(--accent);font-weight:600;}
+
+    /* Recherche centrale */
+    form{width:100%;max-width:620px;display:flex;align-items:center;gap:8px;
+      background:var(--bg2);border:1px solid var(--border);border-radius:26px;
+      padding:6px 8px 6px 18px;box-shadow:0 8px 30px rgba(0,0,0,.30);}
+    form:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(31,182,201,.16),0 8px 30px rgba(0,0,0,.30);}
+    #q{flex:1;background:transparent;border:0;outline:none;color:var(--fg);font-size:16px;height:38px;}
+    #q::placeholder{color:var(--muted);}
+    form button{width:42px;height:38px;border:0;border-radius:20px;background:var(--accent);color:#04222a;
+      font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    form button:hover{filter:brightness(1.08);}
+
+    .shortcuts{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:center;}
+    .chip{display:flex;align-items:center;gap:7px;text-decoration:none;color:var(--fg);
+      background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:9px 14px;font-size:12.8px;
+      transition:border-color .12s ease,background .12s ease;}
+    .chip:hover{border-color:var(--accent);background:var(--bg3);}
+    .chip .i{font-size:15px;}
+
+    footer{margin-top:34px;color:var(--muted);font-size:11.5px;text-align:center;max-width:620px;line-height:1.6;}
+    @media (max-width:520px){ form{max-width:94vw;} .brand h1{font-size:16px;} }
   </style>
 </head>
 <body>
-  <h1>KDL <span>Privacy</span> Dev Browser</h1>
-  <div class="sub">Léger · confidentiel · orienté développeur — V1</div>
-  <div class="grid">
-    <div class="card"><b>🔎 Recherche privée</b><p>DuckDuckGo par défaut. Aucune télémétrie, aucun compte requis.</p></div>
-    <div class="card"><b>🛠️ Outils dev</b><p>DevTools, infos page, capture écran, modes responsive.</p></div>
-    <div class="card"><b>✓ Audit léger</b><p>Title, meta, H1, HTTPS, images sans alt, liens externes.</p></div>
-    <div class="card"><b>🧅 Onion Search</b><p>Recherche Ahmia publique. .onion ouverts via Tor Browser externe.</p></div>
+  <div class="brand"><span class="ring">🛡️</span><h1>KDL <b>Privacy</b> Dev Browser</h1></div>
+
+  <form id="search" autocomplete="off">
+    <input id="q" type="text" placeholder="Rechercher avec DuckDuckGo ou saisir une URL" spellcheck="false" autofocus />
+    <button type="submit" title="Rechercher" aria-label="Rechercher">🔍</button>
+  </form>
+
+  <div class="shortcuts">
+    <a class="chip" href="kdlgo://q/https%3A%2F%2Fduckduckgo.com"><span class="i">🔎</span>DuckDuckGo</a>
+    <a class="chip" href="kdlgo://q/https%3A%2F%2Fkdl-tech.fr"><span class="i">🌐</span>KDL-TECH</a>
+    <a class="chip" href="kdlgo://q/https%3A%2F%2Fgithub.com%2FKdl-Tech%2Fkdl-privacy-dev-browser"><span class="i">⌨️</span>GitHub</a>
   </div>
+
   <footer>
-    Logiciel libre (MIT) · Aucun tracking KDL ·
-    Non affilié à DuckDuckGo ni au Tor Project. Onion Search : usage légal uniquement.
+    Navigation privée légère · Outils développeur · Onion Search via Tor Browser (usage légal).<br>
+    Logiciel libre (MIT) · Non affilié à DuckDuckGo, au Tor Project ni à Ahmia. VPN/IA prévus en V2.
   </footer>
+
+  <script>
+    // La recherche centrale délègue au routage sécurisé du parent (URL / DuckDuckGo / .onion -> Tor),
+    // via un schéma sentinelle intercepté par le renderer (will-navigate). Rien n'est résolu ici.
+    document.getElementById('search').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = document.getElementById('q').value.trim();
+      if (v) location.href = 'kdlgo://q/' + encodeURIComponent(v);
+    });
+  </script>
 </body>
 </html>
