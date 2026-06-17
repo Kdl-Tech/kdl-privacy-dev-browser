@@ -15,17 +15,17 @@
 - [x] Onion Search prudent : recherche Ahmia publique, .onion → Tor Browser externe + avertissement
 - [x] Sécurité Electron stricte (isolation, sandbox, preload minimal, CSP)
 
-## V1.1 (courte — NE PAS démarrer avant V1 validée + poussée proprement + intégrée KDL-TECH / Maia / KDL Pro Launcher)
+## V1.1 (livrée — branche `feature/v1.1-polish`)
 
 Petites améliorations sans changement d'architecture :
 
-- [ ] Multi-onglets simple (2-3 onglets max).
-- [ ] Édition/renommage d'un favori + recherche dans la liste.
-- [ ] Export/import des favoris en JSON local.
-- [ ] Aligner « Nettoyer le site » sur la partition `persist:kdl` (corrige la note V1 : nettoyage agit sur defaultSession).
-- [ ] Téléchargements : dossier dédié + confirmation.
-- [ ] Raccourci favori (Ctrl+D) et raccourci panneau favoris.
-- [ ] Icône PNG multi-tailles (256/128/48) en plus du SVG pour les thèmes qui ne rendent pas le SVG.
+- [x] Multi-onglets simples (barre d'onglets, nouvel/fermer/changer, 1 onglet minimum, webview par onglet).
+- [x] Favoris améliorés : édition titre/URL, recherche, export et import JSON (anti-doublon + validation d'URL).
+- [x] « Nettoyer le site » et clear-all alignés sur `persist:kdl` (corrige le bug V1 : agissait sur defaultSession ; favoris/préférences désormais préservés).
+- [x] Téléchargements : dossier dédié `~/Bureau/kdl-telechargements`, notification à la fin, aucune exécution/ouverture auto.
+- [x] Raccourcis : Ctrl+L, Ctrl+R, Ctrl+T, Ctrl+W, Ctrl+D, Ctrl+Shift+I (+ F12, Ctrl+Shift+M).
+- [x] Page « À propos » (version, MIT, lien GitHub, non-affiliation, rappel VPN/IA = V2).
+- [x] Icône PNG multi-tailles (256/128/48) en plus du SVG ; `.desktop` pointe sur le PNG.
 
 ## V2 (préparée, NON codée en V1)
 
