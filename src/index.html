@@ -8,6 +8,11 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div id="tabbar">
+    <div id="tabs"></div>
+    <button id="newtab" title="Nouvel onglet (Ctrl+T)">+</button>
+  </div>
+
   <header id="toolbar">
     <div class="nav-group">
       <button id="back" title="Précédent">‹</button>
@@ -23,7 +28,7 @@
     </form>
 
     <div class="nav-group">
-      <button id="btn-fav" title="Ajouter/retirer des favoris">☆</button>
+      <button id="btn-fav" title="Ajouter/retirer des favoris (Ctrl+D)">☆</button>
       <button id="btn-favs" title="Favoris">★≡</button>
       <button id="btn-info" title="Infos page">ⓘ</button>
       <button id="btn-audit" title="Audit léger">✓</button>
@@ -32,6 +37,7 @@
       <button id="btn-clean" title="Nettoyer le site">🧹</button>
       <button id="btn-onion" title="Onion Search">🧅</button>
       <button id="btn-settings" title="Confidentialité">⚙</button>
+      <button id="btn-about" title="À propos">?</button>
     </div>
   </header>
 
@@ -43,17 +49,11 @@
   </div>
 
   <main id="viewport">
-    <webview id="view" src="home.html"
-             partition="persist:kdl"
-             allowpopups
-             webpreferences="contextIsolation=yes,nodeIntegration=no,sandbox=yes"></webview>
+    <aside id="panel" class="panel hidden">
+      <div class="panel-head"><span id="panel-title">Panneau</span><button id="panel-close">✕</button></div>
+      <div id="panel-body"></div>
+    </aside>
   </main>
-
-  <!-- Panneaux latéraux -->
-  <aside id="panel" class="panel hidden">
-    <div class="panel-head"><span id="panel-title">Panneau</span><button id="panel-close">✕</button></div>
-    <div id="panel-body"></div>
-  </aside>
 
   <div id="toast" class="toast hidden"></div>
 
