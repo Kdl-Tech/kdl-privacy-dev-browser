@@ -15,6 +15,18 @@
 - [x] Onion Search prudent : recherche Ahmia publique, .onion → Tor Browser externe + avertissement
 - [x] Sécurité Electron stricte (isolation, sandbox, preload minimal, CSP)
 
+## V1.1 (courte — NE PAS démarrer avant V1 validée + poussée proprement + intégrée KDL-TECH / Maia / KDL Pro Launcher)
+
+Petites améliorations sans changement d'architecture :
+
+- [ ] Multi-onglets simple (2-3 onglets max).
+- [ ] Édition/renommage d'un favori + recherche dans la liste.
+- [ ] Export/import des favoris en JSON local.
+- [ ] Aligner « Nettoyer le site » sur la partition `persist:kdl` (corrige la note V1 : nettoyage agit sur defaultSession).
+- [ ] Téléchargements : dossier dédié + confirmation.
+- [ ] Raccourci favori (Ctrl+D) et raccourci panneau favoris.
+- [ ] Icône PNG multi-tailles (256/128/48) en plus du SVG pour les thèmes qui ne rendent pas le SVG.
+
 ## V2 (préparée, NON codée en V1)
 
 ### VPN Basic WireGuard
