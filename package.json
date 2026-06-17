@@ -1,0 +1,18 @@
+{
+  "name": "kdl-privacy-dev-browser",
+  "version": "1.0.0",
+  "description": "KDL Privacy Dev Browser — navigateur léger orienté développeur, confidentialité et audit web.",
+  "main": "src/main.js",
+  "author": "KDL-TECH",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "audit:secrets": "node scripts/check-secrets.js"
+  },
+  "devDependencies": {
+    "electron": "^42.4.1"
+  }
+}

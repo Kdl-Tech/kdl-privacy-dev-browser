@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self';" />
+  <title>KDL Privacy Dev Browser</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header id="toolbar">
+    <div class="nav-group">
+      <button id="back" title="Précédent">‹</button>
+      <button id="forward" title="Suivant">›</button>
+      <button id="reload" title="Recharger">⟳</button>
+      <button id="home" title="Accueil">⌂</button>
+    </div>
+
+    <form id="urlform">
+      <span id="lock" class="lock" title="Sécurité">·</span>
+      <input id="urlbar" type="text" spellcheck="false" autocomplete="off"
+             placeholder="Rechercher sur DuckDuckGo ou saisir une URL" />
+    </form>
+
+    <div class="nav-group">
+      <button id="btn-info" title="Infos page">ⓘ</button>
+      <button id="btn-audit" title="Audit léger">✓</button>
+      <button id="btn-shot" title="Capture écran">▣</button>
+      <button id="btn-devtools" title="DevTools">{ }</button>
+      <button id="btn-clean" title="Nettoyer le site">🧹</button>
+      <button id="btn-onion" title="Onion Search">🧅</button>
+      <button id="btn-settings" title="Confidentialité">⚙</button>
+    </div>
+  </header>
+
+  <div id="responsive-bar" class="hidden">
+    <span>Affichage :</span>
+    <button data-w="0" class="active">Desktop</button>
+    <button data-w="768">Tablette</button>
+    <button data-w="390">Mobile</button>
+  </div>
+
+  <main id="viewport">
+    <webview id="view" src="home.html"
+             partition="persist:kdl"
+             allowpopups
+             webpreferences="contextIsolation=yes,nodeIntegration=no,sandbox=yes"></webview>
+  </main>
+
+  <!-- Panneaux latéraux -->
+  <aside id="panel" class="panel hidden">
+    <div class="panel-head"><span id="panel-title">Panneau</span><button id="panel-close">✕</button></div>
+    <div id="panel-body"></div>
+  </aside>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
