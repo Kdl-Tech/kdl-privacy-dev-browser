@@ -76,6 +76,46 @@ function updateBar(url) {
   if (url.startsWith('https://')) { lock.textContent = '🔒'; lock.className = 'lock secure'; }
   else if (url.startsWith('http://')) { lock.textContent = '⚠'; lock.className = 'lock insecure'; }
   else { lock.textContent = '·'; lock.className = 'lock'; }
+  updateStar(url);
+}
+
+// --- Favoris (stockage local, aucun cloud/secret) ---
+const btnFav = document.getElementById('btn-fav');
+function getFavs() { return JSON.parse(localStorage.getItem('kdl-favorites') || '[]'); }
+function saveFavs(f) { localStorage.setItem('kdl-favorites', JSON.stringify(f)); }
+function isHome(url) { return !url || url.includes(HOME); }
+function updateStar(url) {
+  const fav = !isHome(url) && getFavs().some((f) => f.url === url);
+  btnFav.textContent = fav ? '★' : '☆';
+  btnFav.classList.toggle('btn-accent', fav);
+}
+btnFav.onclick = () => {
+  const url = view.getURL();
+  if (isHome(url)) return toast('Rien à mettre en favori (page d’accueil).');
+  let favs = getFavs();
+  const idx = favs.findIndex((f) => f.url === url);
+  if (idx >= 0) { favs.splice(idx, 1); saveFavs(favs); updateStar(url); return toast('Retiré des favoris.'); }
+  let domain = ''; try { domain = new URL(url).hostname; } catch { /* */ }
+  favs.unshift({ title: document.title.replace(/^KDL · /, '') || url, url, domain, added: Date.now() });
+  saveFavs(favs); updateStar(url); toast('Ajouté aux favoris.');
+};
+
+document.getElementById('btn-favs').onclick = () => renderFavsPanel();
+function renderFavsPanel() {
+  const favs = getFavs();
+  const list = favs.length
+    ? favs.map((f, i) => `<div class="row">
+        <span class="v" style="text-align:left;flex:1;cursor:pointer" data-open="${i}">
+          ${esc(f.title)}<small class="muted">${esc(f.domain || f.url)}</small></span>
+        <button data-del="${i}" title="Supprimer">🗑</button></div>`).join('')
+    : '<small class="muted">Aucun favori.</small>';
+  showPanel('Favoris', list + '<small class="muted">Stockage local uniquement — aucun cloud.</small>');
+  panelBody.querySelectorAll('[data-open]').forEach((el) => {
+    el.onclick = () => { const f = getFavs()[+el.dataset.open]; if (f) { panel.classList.add('hidden'); navigate(f.url); } };
+  });
+  panelBody.querySelectorAll('[data-del]').forEach((el) => {
+    el.onclick = () => { const a = getFavs(); a.splice(+el.dataset.del, 1); saveFavs(a); renderFavsPanel(); updateStar(view.getURL()); };
+  });
 }
 
 // --- DevTools ---
