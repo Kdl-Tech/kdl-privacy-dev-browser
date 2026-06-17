@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=KDL Privacy Dev Browser
+Comment=Navigateur léger, confidentiel et orienté développeur (V1 locale)
+Exec=/home/skyme/Bureau/kdl-privacy-dev-browser/packaging/launch.sh
+Path=/home/skyme/Bureau/kdl-privacy-dev-browser
+Icon=/home/skyme/Bureau/kdl-privacy-dev-browser/assets/icon.svg
+Terminal=false
+Categories=Network;WebBrowser;
+Keywords=browser;privacy;dev;onion;audit;
+StartupNotify=true
