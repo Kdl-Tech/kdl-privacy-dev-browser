@@ -81,10 +81,12 @@ function wireTab(tab) {
   wv.addEventListener('did-navigate', onNav);
   wv.addEventListener('did-navigate-in-page', (e) => { tab.url = e.url; if (isActive(tab)) updateBar(e.url); });
   wv.addEventListener('new-window', (e) => { if (/^https?:/i.test(e.url)) createTab(e.url); });
-  // Recherche centrale de la page d'accueil : schéma sentinelle -> routage sécurisé du parent.
+  // Recherche/chips de la page d'accueil : schéma sentinelle -> routage sécurisé du parent.
   wv.addEventListener('will-navigate', (e) => {
-    const m = e.url && e.url.match(/^kdlgo:\/\/q\/(.*)$/i);
-    if (m) { try { wv.stop(); } catch { /* */ } navigate(decodeURIComponent(m[1])); }
+    const q = e.url && e.url.match(/^kdlgo:\/\/q\/(.*)$/i);
+    if (q) { try { wv.stop(); } catch { /* */ } navigate(decodeURIComponent(q[1])); return; }
+    const a = e.url && e.url.match(/^kdlgo:\/\/action\/([a-z]+)$/i);
+    if (a) { try { wv.stop(); } catch { /* */ } homeAction(a[1].toLowerCase()); }
   });
 }
 
@@ -142,6 +144,14 @@ function navigate(raw) {
   if (r.onion) return onionWarning(r.value);
   if (!cur()) createTab(r.value);
   else cur().loadURL(r.value).catch(() => { cur().src = r.value; });
+}
+
+// Chips d'action de la page d'accueil -> on réutilise les boutons existants de la barre d'outils.
+function homeAction(verb) {
+  if (verb === 'ddg') return navigate('https://duckduckgo.com');
+  const map = { favs: 'btn-favs', devtools: 'btn-devtools', onion: 'btn-onion', clean: 'btn-clean' };
+  const btn = map[verb] && document.getElementById(map[verb]);
+  if (btn) btn.click();
 }
 
 document.getElementById('urlform').addEventListener('submit', (e) => { e.preventDefault(); navigate(urlbar.value); });

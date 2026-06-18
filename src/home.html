@@ -4,61 +4,116 @@
   <meta charset="UTF-8" />
   <title>KDL Privacy Dev Browser</title>
   <style>
-    :root{--bg:#15171c;--bg2:#1d2027;--bg3:#262a33;--fg:#e7eaf0;--muted:#8b93a3;--accent:#1fb6c9;--border:#2b303a;}
+    :root{
+      --bg:#13151a;--bg2:#1d2027;--bg3:#262a33;--fg:#e7eaf0;--muted:#8b93a3;
+      --accent:#1fb6c9;--accent2:#23d3e8;--border:#2b303a;
+    }
     *{box-sizing:border-box;}
-    body{margin:0;min-height:100vh;background:radial-gradient(1100px 520px at 50% -120px,#1a2733,var(--bg));
+    html,body{height:100%;}
+    body{
+      margin:0;
+      background:
+        radial-gradient(900px 480px at 50% -160px,rgba(31,182,201,.16),transparent 70%),
+        radial-gradient(1200px 600px at 50% 120%,#192531,var(--bg));
       color:var(--fg);font:14px/1.55 system-ui,"Segoe UI",Roboto,sans-serif;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
-    .brand{display:flex;align-items:center;gap:10px;margin-bottom:26px;opacity:.92;}
-    .ring{width:34px;height:34px;border-radius:50%;border:2.5px solid var(--accent);
-      display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 16px rgba(31,182,201,.22);}
-    .brand h1{font-size:18px;margin:0;letter-spacing:.3px;font-weight:600;}
-    .brand b{color:var(--accent);font-weight:600;}
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:40px 24px;text-align:center;
+    }
 
-    /* Recherche centrale */
-    form{width:100%;max-width:620px;display:flex;align-items:center;gap:8px;
-      background:var(--bg2);border:1px solid var(--border);border-radius:26px;
-      padding:6px 8px 6px 18px;box-shadow:0 8px 30px rgba(0,0,0,.30);}
-    form:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(31,182,201,.16),0 8px 30px rgba(0,0,0,.30);}
-    #q{flex:1;background:transparent;border:0;outline:none;color:var(--fg);font-size:16px;height:38px;}
+    /* ── Logo / wordmark central ── */
+    .hero{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:30px;}
+    .ring{
+      width:58px;height:58px;border-radius:50%;border:3px solid var(--accent);
+      display:flex;align-items:center;justify-content:center;font-size:26px;
+      box-shadow:0 0 22px rgba(31,182,201,.28);margin-bottom:10px;
+    }
+    .wordmark{
+      font-size:clamp(38px,8vw,66px);font-weight:700;letter-spacing:2px;line-height:1;
+      margin:0;text-shadow:0 2px 24px rgba(0,0,0,.4);
+    }
+    .wordmark .k{color:var(--fg);}
+    .wordmark .t{color:var(--accent);}
+    .tagline{color:var(--muted);font-size:clamp(13px,2.4vw,16px);letter-spacing:.6px;margin-top:4px;}
+
+    /* ── Barre de recherche centrale (type navigateur) ── */
+    form{
+      width:100%;max-width:680px;display:flex;align-items:center;gap:8px;
+      background:var(--bg2);border:1px solid var(--border);border-radius:30px;
+      padding:7px 9px 7px 22px;box-shadow:0 10px 38px rgba(0,0,0,.38);
+      transition:border-color .12s ease,box-shadow .12s ease;
+    }
+    form:focus-within{
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(31,182,201,.18),0 10px 38px rgba(0,0,0,.38);
+    }
+    .glass{color:var(--muted);font-size:18px;}
+    #q{flex:1;background:transparent;border:0;outline:none;color:var(--fg);font-size:17px;height:44px;}
     #q::placeholder{color:var(--muted);}
-    form button{width:42px;height:38px;border:0;border-radius:20px;background:var(--accent);color:#04222a;
-      font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-    form button:hover{filter:brightness(1.08);}
+    form button{
+      min-width:50px;height:44px;border:0;border-radius:24px;cursor:pointer;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04222a;
+      font-size:18px;display:flex;align-items:center;justify-content:center;
+      transition:filter .12s ease;
+    }
+    form button:hover{filter:brightness(1.1);}
 
-    .shortcuts{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:center;}
-    .chip{display:flex;align-items:center;gap:7px;text-decoration:none;color:var(--fg);
-      background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:9px 14px;font-size:12.8px;
-      transition:border-color .12s ease,background .12s ease;}
+    /* ── Chips / raccourcis ── */
+    .chips{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;justify-content:center;max-width:680px;}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--fg);
+      background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+      padding:10px 16px;font-size:13px;cursor:pointer;
+      transition:border-color .12s ease,background .12s ease,transform .08s ease;
+    }
     .chip:hover{border-color:var(--accent);background:var(--bg3);}
-    .chip .i{font-size:15px;}
+    .chip:active{transform:translateY(1px);}
+    .chip .i{font-size:16px;line-height:1;}
 
-    footer{margin-top:34px;color:var(--muted);font-size:11.5px;text-align:center;max-width:620px;line-height:1.6;}
-    @media (max-width:520px){ form{max-width:94vw;} .brand h1{font-size:16px;} }
+    footer{
+      margin-top:38px;color:var(--muted);font-size:11.5px;line-height:1.65;
+      max-width:640px;
+    }
+    footer b{color:var(--accent);font-weight:600;}
+
+    @media (max-width:560px){
+      form{padding:6px 8px 6px 18px;}
+      #q{font-size:16px;height:42px;}
+      .chips{gap:8px;}
+      .chip{padding:9px 13px;font-size:12.5px;}
+    }
   </style>
 </head>
 <body>
-  <div class="brand"><span class="ring">🛡️</span><h1>KDL <b>Privacy</b> Dev Browser</h1></div>
+  <div class="hero">
+    <span class="ring">🛡️</span>
+    <h1 class="wordmark"><span class="k">KDL</span><span class="t">·TECH</span></h1>
+    <div class="tagline">Privacy Dev Browser</div>
+  </div>
 
   <form id="search" autocomplete="off">
-    <input id="q" type="text" placeholder="Rechercher avec DuckDuckGo ou saisir une URL" spellcheck="false" autofocus />
-    <button type="submit" title="Rechercher" aria-label="Rechercher">🔍</button>
+    <span class="glass" aria-hidden="true">🔍</span>
+    <input id="q" type="text" placeholder="Rechercher avec DuckDuckGo ou entrer une URL"
+           spellcheck="false" autofocus />
+    <button type="submit" title="Rechercher / Ouvrir" aria-label="Rechercher">→</button>
   </form>
 
-  <div class="shortcuts">
-    <a class="chip" href="kdlgo://q/https%3A%2F%2Fduckduckgo.com"><span class="i">🔎</span>DuckDuckGo</a>
-    <a class="chip" href="kdlgo://q/https%3A%2F%2Fkdl-tech.fr"><span class="i">🌐</span>KDL-TECH</a>
-    <a class="chip" href="kdlgo://q/https%3A%2F%2Fgithub.com%2FKdl-Tech%2Fkdl-privacy-dev-browser"><span class="i">⌨️</span>GitHub</a>
+  <div class="chips">
+    <a class="chip" href="kdlgo://q/https%3A%2F%2Fduckduckgo.com"><span class="i">🦆</span>DuckDuckGo</a>
+    <a class="chip" href="kdlgo://action/favs"><span class="i">★</span>Favoris</a>
+    <a class="chip" href="kdlgo://action/devtools"><span class="i">{ }</span>DevTools</a>
+    <a class="chip" href="kdlgo://action/onion"><span class="i">🧅</span>Onion Search</a>
+    <a class="chip" href="kdlgo://action/clean"><span class="i">🧹</span>Effacer session</a>
   </div>
 
   <footer>
     Navigation privée légère · Outils développeur · Onion Search via Tor Browser (usage légal).<br>
-    Logiciel libre (MIT) · Non affilié à DuckDuckGo, au Tor Project ni à Ahmia. VPN/IA prévus en V2.
+    Logiciel libre (<b>MIT</b>) · Non affilié à DuckDuckGo, au Tor Project ni à Ahmia. VPN/IA prévus en V2.
   </footer>
 
   <script>
-    // La recherche centrale délègue au routage sécurisé du parent (URL / DuckDuckGo / .onion -> Tor),
-    // via un schéma sentinelle intercepté par le renderer (will-navigate). Rien n'est résolu ici.
+    // La recherche centrale et les chips d'action délèguent au routage sécurisé du parent
+    // via un schéma sentinelle (kdlgo://) intercepté par le renderer (will-navigate).
+    // Aucune résolution d'URL ni action sensible n'est faite ici.
     document.getElementById('search').addEventListener('submit', function (e) {
       e.preventDefault();
       var v = document.getElementById('q').value.trim();
