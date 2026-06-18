@@ -51,14 +51,18 @@ const cur = () => activeTab() && activeTab().wv;
 const isActive = (tab) => tab.id === activeId;
 
 function createTab(url) {
+  // Home par défaut : on charge l'URL ABSOLUE (file://…/home.html) ; un chemin relatif
+  // ("home.html") n'est pas résolu de façon fiable par <webview> -> page blanche.
+  const target = (!url || url === HOME) ? homeURL() : url;
   const wv = document.createElement('webview');
   wv.setAttribute('partition', 'persist:kdl');
   wv.setAttribute('allowpopups', '');
   wv.setAttribute('webpreferences', 'contextIsolation=yes,nodeIntegration=no,sandbox=yes');
   wv.classList.add('hidden');
-  wv.src = url || HOME;
+  // Attacher AVANT de définir src : le guest n'est prêt qu'une fois dans le DOM.
   viewport.appendChild(wv);
-  const tab = { id: ++seq, wv, title: 'Nouvel onglet', url: url || '' };
+  wv.src = target;
+  const tab = { id: ++seq, wv, title: 'Nouvel onglet', url: target };
   tabs.push(tab);
   wireTab(tab);
   activate(tab.id);

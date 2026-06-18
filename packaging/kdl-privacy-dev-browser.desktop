@@ -1,11 +1,13 @@
 [Desktop Entry]
 Type=Application
 Name=KDL Privacy Dev Browser
-Comment=Navigateur léger, confidentiel et orienté développeur (V1 locale)
-Exec=/home/skyme/Bureau/kdl-privacy-dev-browser/packaging/launch.sh
+Comment=Navigateur léger, confidentiel et orienté développeur (V1.1 locale)
+Exec=/home/skyme/Bureau/kdl-privacy-dev-browser/packaging/launch.sh %u
 Path=/home/skyme/Bureau/kdl-privacy-dev-browser
 Icon=/home/skyme/Bureau/kdl-privacy-dev-browser/assets/icon-256.png
 Terminal=false
 Categories=Network;WebBrowser;
 Keywords=browser;privacy;dev;onion;audit;
 StartupNotify=true
+StartupWMClass=KDL Privacy Dev Browser
+MimeType=x-scheme-handler/kdl-privacy-browser;

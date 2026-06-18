@@ -18,6 +18,22 @@ app.setPath('userData', path.join(app.getPath('userData')));
 
 let mainWindow = null;
 
+// Protocole local (deep-link) : permet à un lanceur d'ouvrir l'app sur sa home locale,
+// sans jamais ouvrir GitHub. Sur les postes où il n'est pas enregistré, le lien est sans effet.
+const PROTOCOL = 'kdl-privacy-browser';
+if (process.defaultApp && process.argv.length >= 2) {
+  app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [path.resolve(process.argv[1])]);
+} else {
+  app.setAsDefaultProtocolClient(PROTOCOL);
+}
+
+// Mono-instance : un 2e lancement (ex. kdl-privacy-browser://open) réveille la fenêtre
+// existante sur la home au lieu de dupliquer ou d'échouer.
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -50,6 +66,14 @@ function createWindow() {
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
+// Mettre la fenêtre au premier plan sur la home (réutilisé par le protocole / 2e instance).
+function focusHome() {
+  if (!mainWindow || mainWindow.isDestroyed()) { createWindow(); return; }
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
 // Blocage cookies tiers (toggle depuis le renderer).
 function setThirdPartyCookieBlock(enabled) {
   const ses = session.defaultSession;
@@ -58,7 +82,12 @@ function setThirdPartyCookieBlock(enabled) {
   return enabled;
 }
 
+// Un 2e lancement (deep-link inclus) réveille la fenêtre existante sur la home.
+app.on('second-instance', () => focusHome());
+app.on('open-url', () => focusHome()); // macOS : protocole
+
 app.whenReady().then(() => {
+  if (!gotSingleInstanceLock) return;
   // Durcissement : interdire toute permission web sensible par défaut (caméra, micro, géoloc, notifications).
   const denyHandler = (wc, permission, cb) => {
     const allowed = ['fullscreen', 'clipboard-sanitized-write'];
