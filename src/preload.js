@@ -24,5 +24,14 @@ contextBridge.exposeInMainWorld('kdl', {
   byokSet: (cfg) => ipcRenderer.invoke('kdl:byok-set', cfg),
   byokClear: () => ipcRenderer.invoke('kdl:byok-clear'),
   byokGenerate: (prompt, maxTokens) => ipcRenderer.invoke('kdl:byok-generate', { prompt, maxTokens }),
-  onDownload: (cb) => ipcRenderer.on('kdl:download', (_e, info) => cb(info))
+  dlList: () => ipcRenderer.invoke('kdl:dl-list'),
+  dlPause: (id) => ipcRenderer.invoke('kdl:dl-pause', id),
+  dlResume: (id) => ipcRenderer.invoke('kdl:dl-resume', id),
+  dlCancel: (id) => ipcRenderer.invoke('kdl:dl-cancel', id),
+  dlOpen: (id) => ipcRenderer.invoke('kdl:dl-open', id),
+  dlFolder: (id) => ipcRenderer.invoke('kdl:dl-folder', id),
+  dlRemove: (id) => ipcRenderer.invoke('kdl:dl-remove', id),
+  dlClear: () => ipcRenderer.invoke('kdl:dl-clear'),
+  dlHash: (id) => ipcRenderer.invoke('kdl:dl-hash', id),
+  onDlUpdate: (cb) => ipcRenderer.on('kdl:dl-update', (_e, rec) => cb(rec))
 });

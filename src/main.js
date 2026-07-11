@@ -105,19 +105,8 @@ app.whenReady().then(() => {
   session.defaultSession.setPermissionRequestHandler(denyHandler);
   browseSession().setPermissionRequestHandler(denyHandler);
 
-  // Téléchargements : dossier dédié, aucune exécution/ouverture auto.
-  browseSession().on('will-download', (_e, item) => {
-    fs.mkdirSync(DL_DIR, { recursive: true });
-    const target = path.join(DL_DIR, item.getFilename());
-    item.setSavePath(target);
-    item.once('done', (_ev, state) => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('kdl:download', {
-          state, file: target, name: item.getFilename()
-        });
-      }
-    });
-  });
+  // Téléchargements : gestionnaire dédié (dossier dédié, aucune exécution/ouverture auto).
+  browseSession().on('will-download', (_e, item) => startDownload(item));
 
   createWindow();
 
@@ -408,6 +397,83 @@ function apiErr(r) {
   const m = r.data && (r.data.error && (r.data.error.message || r.data.error)) ;
   return 'API ' + (r.status || '') + (m ? ' — ' + String(m).slice(0, 160) : '');
 }
+
+// ───────────────────────────────────────────────────────────────────────────
+// Gestionnaire de téléchargements — dossier dédié, aucune exécution/ouverture auto,
+// progression, pause/reprise/annulation, historique local, SHA-256 non bloquant.
+// ───────────────────────────────────────────────────────────────────────────
+const DL_HISTORY_FILE = () => path.join(app.getPath('userData'), 'downloads.json');
+const RISKY = /\.(exe|msi|bat|cmd|ps1|sh|appimage|deb|rpm|apk|dmg|scr|com|jar)$/i;
+let dlHistory = null;                 // [ {id,name,url,domain,path,total,received,state,risky,added} ]
+const dlActive = new Map();           // id -> { item, lastT, lastB }
+let dlSeq = 0;
+
+function loadDlHistory() {
+  if (dlHistory) return dlHistory;
+  try { dlHistory = JSON.parse(fs.readFileSync(DL_HISTORY_FILE(), 'utf8')); } catch { dlHistory = []; }
+  if (!Array.isArray(dlHistory)) dlHistory = [];
+  return dlHistory;
+}
+function saveDlHistory() { try { fs.writeFileSync(DL_HISTORY_FILE(), JSON.stringify(dlHistory.slice(0, 200))); } catch { /* */ } }
+function dlEmit(rec) { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('kdl:dl-update', rec); }
+function uniquePath(dir, name) {
+  let p = path.join(dir, name); if (!fs.existsSync(p)) return p;
+  const ext = path.extname(name), base = path.basename(name, ext);
+  let i = 1; while (fs.existsSync(path.join(dir, `${base} (${i})${ext}`))) i++;
+  return path.join(dir, `${base} (${i})${ext}`);
+}
+
+function startDownload(item) {
+  fs.mkdirSync(DL_DIR, { recursive: true });
+  const name = item.getFilename();
+  const target = uniquePath(DL_DIR, name);
+  item.setSavePath(target);
+  const id = 'dl' + (++dlSeq) + '-' + Date.now();
+  let domain = ''; try { domain = new URL(item.getURL()).hostname; } catch { /* */ }
+  const rec = {
+    id, name: path.basename(target), url: item.getURL(), domain, path: target,
+    total: item.getTotalBytes() || 0, received: 0, speed: 0,
+    state: 'progressing', risky: RISKY.test(name), added: Date.now(),
+  };
+  loadDlHistory().unshift(rec); saveDlHistory();
+  dlActive.set(id, { item, lastT: Date.now(), lastB: 0 });
+  dlEmit(rec);
+
+  item.on('updated', (_e, st) => {
+    const a = dlActive.get(id); if (!a) return;
+    rec.received = item.getReceivedBytes();
+    rec.total = item.getTotalBytes() || rec.total;
+    const now = Date.now(), dt = (now - a.lastT) / 1000;
+    if (dt >= 0.4) { rec.speed = Math.max(0, Math.round((rec.received - a.lastB) / dt)); a.lastT = now; a.lastB = rec.received; }
+    rec.state = st === 'interrupted' ? 'interrupted' : (item.isPaused() ? 'paused' : 'progressing');
+    dlEmit(rec);
+  });
+  item.once('done', (_e, st) => {
+    rec.state = st; rec.speed = 0; rec.received = item.getReceivedBytes(); rec.total = item.getTotalBytes() || rec.total;
+    dlActive.delete(id);
+    if (st !== 'completed') { try { if (fs.existsSync(target)) fs.unlinkSync(target); } catch { /* nettoyer l'incomplet */ } }
+    saveDlHistory(); dlEmit(rec);
+  });
+}
+
+ipcMain.handle('kdl:dl-list', async () => loadDlHistory());
+ipcMain.handle('kdl:dl-pause', async (_e, id) => { const a = dlActive.get(id); if (a) a.item.pause(); return { ok: !!a }; });
+ipcMain.handle('kdl:dl-resume', async (_e, id) => { const a = dlActive.get(id); if (a && a.item.canResume()) a.item.resume(); return { ok: !!a }; });
+ipcMain.handle('kdl:dl-cancel', async (_e, id) => { const a = dlActive.get(id); if (a) a.item.cancel(); return { ok: !!a }; });
+ipcMain.handle('kdl:dl-open', async (_e, id) => { const r = loadDlHistory().find((x) => x.id === id); if (r && r.state === 'completed' && fs.existsSync(r.path)) { shell.openPath(r.path); return { ok: true }; } return { ok: false }; });
+ipcMain.handle('kdl:dl-folder', async (_e, id) => { const r = loadDlHistory().find((x) => x.id === id); if (r && fs.existsSync(r.path)) { shell.showItemInFolder(r.path); return { ok: true }; } shell.openPath(DL_DIR); return { ok: true }; });
+ipcMain.handle('kdl:dl-remove', async (_e, id) => { dlHistory = loadDlHistory().filter((x) => x.id !== id); saveDlHistory(); return { ok: true }; });
+ipcMain.handle('kdl:dl-clear', async () => { const a = [...dlActive.keys()]; dlHistory = loadDlHistory().filter((x) => a.includes(x.id)); saveDlHistory(); return { ok: true }; });
+ipcMain.handle('kdl:dl-hash', async (_e, id) => {
+  const r = loadDlHistory().find((x) => x.id === id);
+  if (!r || !fs.existsSync(r.path)) return { ok: false, error: 'fichier introuvable' };
+  return await new Promise((resolve) => {
+    const h = crypto.createHash('sha256'), s = fs.createReadStream(r.path);
+    s.on('data', (d) => h.update(d));
+    s.on('end', () => resolve({ ok: true, sha256: h.digest('hex') }));
+    s.on('error', (e) => resolve({ ok: false, error: String(e) }));
+  });
+});
 
 // Détection Tor Browser sur Linux (lecture seule, aucune installation).
 ipcMain.handle('kdl:detect-tor', async () => {

@@ -394,3 +394,29 @@ small.muted { color: var(--muted); display: block; margin-top: 8px; line-height:
 .ai-preview { color: var(--muted); font-size: 12px; max-height: 120px; overflow: auto; padding: 8px; background: var(--bg2); border-radius: 8px; }
 #ai-len { width: 100%; accent-color: var(--cyan); }
 select.input { appearance: none; }
+
+/* ═══ Téléchargements ════════════════════════════════════════════════════ */
+.dl-item { padding: 11px 0; border-bottom: 1px solid var(--line-soft); }
+.dl-item:last-of-type { border-bottom: none; }
+.dl-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dl-name { font-weight: 600; color: var(--fg-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-sub { color: var(--muted); font-size: 12px; margin: 3px 0 6px; }
+.dl-bar { height: 5px; background: var(--panel); border-radius: 4px; overflow: hidden; margin-bottom: 7px; }
+.dl-bar i { display: block; height: 100%; background: linear-gradient(90deg,var(--cyan),var(--turq)); transition: width .2s linear; }
+.dl-risky { font-size: 11.5px; color: var(--warn); background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.35);
+  border-radius: 8px; padding: 6px 9px; margin: 2px 0 7px; }
+.dl-acts { display: flex; flex-wrap: wrap; gap: 5px; }
+.dl-acts button { height: 27px; padding: 0 10px; font-size: 12px; cursor: pointer; background: var(--panel);
+  color: var(--fg); border: 1px solid var(--line); border-radius: var(--radius-sm); transition: border-color var(--dur), color var(--dur); }
+.dl-acts button:hover { border-color: var(--cyan); color: var(--cyan); }
+.dl-hash { font-family: ui-monospace,Consolas,monospace; font-size: 11px; color: var(--muted);
+  word-break: break-all; margin-top: 7px; padding: 7px; background: var(--panel); border-radius: 7px; }
+
+/* Boutons de téléchargement par plateforme (À propos) */
+.dl-os { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 10px; }
+.dl-os-btn { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 12px; cursor: pointer;
+  background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  font-size: 13px; transition: border-color var(--dur), color var(--dur), background var(--dur); }
+.dl-os-btn:hover { border-color: var(--cyan); color: var(--fg-strong); background: var(--elev); }
+.dl-os-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; color: var(--turq); flex-shrink: 0; }
+.dl-os-btn small { color: var(--muted); margin-left: auto; font-size: 11px; }

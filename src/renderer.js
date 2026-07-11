@@ -4,6 +4,7 @@ const DDG = 'https://duckduckgo.com/?q=';
 const AHMIA = 'https://ahmia.fi/search/?q=';
 const HOME = 'home.html';
 const GITHUB = 'https://github.com/Kdl-Tech/kdl-privacy-dev-browser';
+const DOWNLOAD_URL = 'https://kdl-tech.fr/kdl-privacy-dev-browser/';   // page de téléchargement officielle
 
 const urlbar = document.getElementById('urlbar');
 const lock = document.getElementById('lock');
@@ -510,10 +511,18 @@ document.getElementById('btn-about').onclick = async () => {
     <div class="row"><span class="k">Version</span><span class="v">${esc(info.version)}</span></div>
     <div class="row"><span class="k">Licence</span><span class="v">MIT</span></div>
     <div class="row"><span class="k">Identité</span><span class="v">KDL TECH</span></div>
+    <div class="field" style="padding-top:10px"><label>Télécharger pour un autre appareil</label></div>
+    <div class="dl-os">
+      <button class="dl-os-btn" data-os="win"><svg viewBox="0 0 24 24"><path d="M3 5.5 10.5 4v7.5H3zM10.5 12.5V20L3 18.5V12.5zM12 3.8 21 2v9.5h-9zM21 12.5V22l-9-1.8V12.5z"/></svg>Windows<small>.exe</small></button>
+      <button class="dl-os-btn" data-os="mac"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 3c0 1.5-1.3 3-2.8 2.9C13 4.4 14.4 3 16 3zM18.5 16.5c-.5 1.2-1.6 3-3 3-1 0-1.4-.6-2.6-.6s-1.7.6-2.6.6c-1.5 0-2.8-1.9-3.3-3.2-1-2.6-.4-6 1.6-7.2.9-.5 2-.5 2.9 0 .6.3 1.1.3 1.7 0 .9-.5 2-.6 2.9-.1-2.3 1.5-1.9 4.8.4 6.5z"/></svg>macOS<small>.dmg</small></button>
+      <button class="dl-os-btn" data-os="deb"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 1 4 4c0 1.5-.8 2.4-.8 3.5 0 2 2.8 2.6 2.8 6.5 0 2-2.7 4-6 4s-6-2-6-4c0-3.9 2.8-4.5 2.8-6.5 0-1.1-.8-2-.8-3.5a4 4 0 0 1 4-4Z"/></svg>Linux<small>.deb</small></button>
+      <button class="dl-os-btn" data-os="appimage"><svg viewBox="0 0 24 24"><path d="M12 3 21 8v8l-9 5-9-5V8z"/><path d="M12 12v9M3 8l9 4 9-4"/></svg>Linux<small>.AppImage</small></button>
+    </div>
     <button id="about-gh" class="btn-full btn-accent">Voir sur GitHub</button>
     <small class="muted">Logiciel libre et gratuit. Non affilié à DuckDuckGo, au Tor Project ni à Ahmia.</small>
-    <small class="muted">Assistant IA gratuit : architecture préparée, non activée dans cette version.</small>
+    <small class="muted">KDL IA : petite IA locale gratuite + possibilité de connecter votre propre IA (API).</small>
   `);
+  panelBody.querySelectorAll('.dl-os-btn').forEach((b) => b.onclick = () => window.kdl.openExternal(DOWNLOAD_URL));
   document.getElementById('about-gh').onclick = () => window.kdl.openExternal(GITHUB);
 };
 
@@ -528,12 +537,6 @@ function recordHistory(url) {
   localStorage.setItem('kdl-history', JSON.stringify(h.slice(0, 200)));
 }
 
-// Notifications de téléchargement.
-window.kdl.onDownload((info) => {
-  if (info.state === 'completed') toast('Téléchargé : ' + info.name + ' → ' + info.file, 4000);
-  else toast('Téléchargement échoué : ' + (info.name || '') + ' (' + info.state + ')', 4000);
-});
-
 // --- Zoom de la page active (Ctrl +/-/0) ---
 function setZoom(delta, reset) {
   const wv = cur(); if (!wv) return;
@@ -544,15 +547,75 @@ function setZoom(delta, reset) {
   } catch { /* */ }
 }
 
-// --- Panneau Téléchargements (dossier local dédié) ---
-function openDownloadsPanel() {
-  showPanel('Téléchargements', `
-    <div class="empty">Les fichiers sont enregistrés dans<br><b class="muted">Bureau/kdl-telechargements</b><br>
-      Aucune exécution ni ouverture automatique.</div>
-    <small class="muted">Un fichier téléchargé déclenche une notification en bas de l'écran.
-      Stockage local uniquement — aucun cloud.</small>
-  `);
+// --- Gestionnaire de téléchargements ---
+function fmtBytes(n) {
+  if (!n) return '0 o'; const u = ['o', 'Ko', 'Mo', 'Go']; let i = 0; n = +n;
+  while (n >= 1024 && i < 3) { n /= 1024; i++; } return n.toFixed(i ? 1 : 0) + ' ' + u[i];
 }
+const DL_STATE = { progressing: 'en cours', paused: 'en pause', completed: 'terminé', cancelled: 'annulé', interrupted: 'interrompu' };
+let dlPanelOpen = false;
+
+async function openDownloadsPanel() {
+  dlPanelOpen = true;
+  const list = await window.kdl.dlList();
+  const rows = list.length ? list.map(dlRow).join('') : '<div class="empty">Aucun téléchargement.<br>Les fichiers arrivent dans <b class="muted">Bureau/kdl-telechargements</b> — aucune exécution automatique.</div>';
+  showPanel('Téléchargements', `<div id="dl-list">${rows}</div>
+    ${list.length ? '<button id="dl-clear" class="btn-full">Vider l’historique (hors téléchargements actifs)</button>' : ''}
+    <small class="muted">Stockage local uniquement. KDL n'exécute jamais un fichier ; vérifiez le SHA-256 avant d'ouvrir un exécutable.</small>`);
+  wireDownloads();
+}
+
+function dlRow(r) {
+  const pct = r.total ? Math.min(100, Math.round(r.received / r.total * 100)) : 0;
+  const active = r.state === 'progressing' || r.state === 'paused';
+  const done = r.state === 'completed';
+  const size = r.total ? fmtBytes(r.received) + ' / ' + fmtBytes(r.total) : fmtBytes(r.received);
+  const spd = r.state === 'progressing' && r.speed ? ' · ' + fmtBytes(r.speed) + '/s' : '';
+  return `<div class="dl-item" data-id="${r.id}">
+    <div class="dl-top"><span class="dl-name" title="${esc(r.name)}">${esc(r.name)}</span>
+      <span class="tag ${done ? 'ok' : (active ? 'warn' : 'err')}">${DL_STATE[r.state] || r.state}</span></div>
+    <div class="dl-sub">${esc(r.domain || '')} · ${size}${spd}</div>
+    ${active ? `<div class="dl-bar"><i style="width:${pct}%"></i></div>` : ''}
+    ${r.risky ? '<div class="dl-risky">⚠ Fichier exécutable — n’ouvrez que si vous avez confiance en la source. Vérifiez le SHA-256.</div>' : ''}
+    <div class="dl-acts">
+      ${r.state === 'progressing' ? '<button data-a="pause">Pause</button>' : ''}
+      ${r.state === 'paused' ? '<button data-a="resume">Reprendre</button>' : ''}
+      ${active ? '<button data-a="cancel">Annuler</button>' : ''}
+      ${done ? '<button data-a="open">Ouvrir</button><button data-a="folder">Dossier</button><button data-a="hash">SHA-256</button>' : ''}
+      ${!active ? '<button data-a="remove">Retirer</button>' : ''}
+    </div>
+    <div class="dl-hash hidden"></div>
+  </div>`;
+}
+
+function wireDownloads() {
+  const clr = document.getElementById('dl-clear');
+  if (clr) clr.onclick = async () => { await window.kdl.dlClear(); openDownloadsPanel(); };
+  panelBody.querySelectorAll('.dl-item').forEach((el) => {
+    const id = el.dataset.id;
+    el.querySelectorAll('[data-a]').forEach((b) => b.onclick = async () => {
+      const a = b.dataset.a;
+      if (a === 'pause') { await window.kdl.dlPause(id); }
+      else if (a === 'resume') { await window.kdl.dlResume(id); }
+      else if (a === 'cancel') { await window.kdl.dlCancel(id); }
+      else if (a === 'open') { const r = await window.kdl.dlOpen(id); if (!r.ok) toast('Fichier introuvable.'); }
+      else if (a === 'folder') { await window.kdl.dlFolder(id); }
+      else if (a === 'remove') { await window.kdl.dlRemove(id); openDownloadsPanel(); }
+      else if (a === 'hash') {
+        const box = el.querySelector('.dl-hash'); box.classList.remove('hidden'); box.textContent = 'Calcul du SHA-256…';
+        const res = await window.kdl.dlHash(id);
+        box.textContent = res.ok ? 'SHA-256 : ' + res.sha256 : 'Échec : ' + (res.error || '');
+      }
+    });
+  });
+}
+
+// Notifications + rafraîchissement live du panneau.
+window.kdl.onDlUpdate((rec) => {
+  if (rec.state === 'completed') toast('Téléchargé : ' + rec.name, 3500);
+  else if (rec.state === 'interrupted') toast('Téléchargement interrompu : ' + rec.name, 3500);
+  if (!panel.classList.contains('hidden') && panelTitle.textContent === 'Téléchargements') openDownloadsPanel();
+});
 
 // --- Raccourcis clavier ---
 document.addEventListener('keydown', (e) => {
@@ -731,6 +794,7 @@ async function runGenAI(kind, confirmed) {
 }
 
 document.getElementById('btn-ai').onclick = () => openAIPanel();
+document.getElementById('btn-downloads').onclick = () => openDownloadsPanel();
 
 // Hook IA du mode lecture : réutilise le service (avec confirmation intégrée).
 window.KDLReader.setAIHook(async (kind, text) => {
