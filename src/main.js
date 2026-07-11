@@ -97,13 +97,16 @@ app.on('open-url', () => focusHome()); // macOS : protocole
 
 app.whenReady().then(() => {
   if (!gotSingleInstanceLock) return;
-  // Durcissement : interdire toute permission web sensible par défaut (caméra, micro, géoloc, notifications).
-  const denyHandler = (wc, permission, cb) => {
-    const allowed = ['fullscreen', 'clipboard-sanitized-write'];
-    cb(allowed.includes(permission));
+  // Permissions : refus par défaut des permissions sensibles ; choix par site respecté.
+  const AUTO_ALLOW = ['fullscreen', 'clipboard-sanitized-write'];
+  const handler = (wc, permission, cb, details) => {
+    if (AUTO_ALLOW.includes(permission)) return cb(true);
+    let origin = ''; try { origin = new URL((details && details.requestingUrl) || wc.getURL()).origin; } catch { /* */ }
+    const decision = getPerm(origin, permission);
+    cb(decision === 'allow');            // défaut (null) = refus
   };
-  session.defaultSession.setPermissionRequestHandler(denyHandler);
-  browseSession().setPermissionRequestHandler(denyHandler);
+  session.defaultSession.setPermissionRequestHandler(handler);
+  browseSession().setPermissionRequestHandler(handler);
 
   // Téléchargements : gestionnaire dédié (dossier dédié, aucune exécution/ouverture auto).
   browseSession().on('will-download', (_e, item) => startDownload(item));
@@ -464,6 +467,45 @@ ipcMain.handle('kdl:dl-open', async (_e, id) => { const r = loadDlHistory().find
 ipcMain.handle('kdl:dl-folder', async (_e, id) => { const r = loadDlHistory().find((x) => x.id === id); if (r && fs.existsSync(r.path)) { shell.showItemInFolder(r.path); return { ok: true }; } shell.openPath(DL_DIR); return { ok: true }; });
 ipcMain.handle('kdl:dl-remove', async (_e, id) => { dlHistory = loadDlHistory().filter((x) => x.id !== id); saveDlHistory(); return { ok: true }; });
 ipcMain.handle('kdl:dl-clear', async () => { const a = [...dlActive.keys()]; dlHistory = loadDlHistory().filter((x) => a.includes(x.id)); saveDlHistory(); return { ok: true }; });
+// ─── Centre de confidentialité — permissions par site + cookies/données ────
+const PERM_FILE = () => path.join(app.getPath('userData'), 'permissions.json');
+let permStore = null;
+function loadPerms() { if (permStore) return permStore; try { permStore = JSON.parse(fs.readFileSync(PERM_FILE(), 'utf8')); } catch { permStore = {}; } return permStore; }
+function savePerms() { try { fs.writeFileSync(PERM_FILE(), JSON.stringify(permStore)); } catch { /* */ } }
+function getPerm(origin, name) { const s = loadPerms(); return (s[origin] && s[origin][name]) || null; }
+
+ipcMain.handle('kdl:perm-get', async (_e, origin) => (loadPerms()[origin] || {}));
+ipcMain.handle('kdl:perm-set', async (_e, { origin, name, value }) => {
+  const s = loadPerms(); if (!origin || !name) return { ok: false };
+  s[origin] = s[origin] || {};
+  if (value === 'default' || value == null) delete s[origin][name]; else s[origin][name] = value;
+  if (!Object.keys(s[origin]).length) delete s[origin];
+  savePerms(); return { ok: true };
+});
+ipcMain.handle('kdl:perm-reset', async (_e, origin) => { const s = loadPerms(); delete s[origin]; savePerms(); return { ok: true }; });
+
+// Infos site : cookies + estimation stockage (session de navigation persist:kdl).
+ipcMain.handle('kdl:site-info', async (_e, origin) => {
+  const ses = browseSession();
+  let cookies = 0;
+  try { const c = await ses.cookies.get(origin ? { domain: new URL(origin).hostname } : {}); cookies = c.length; } catch { /* */ }
+  const perms = loadPerms()[origin] || {};
+  return { cookies, perms };
+});
+// Effacer cookies d'un site (sans toucher aux favoris/préférences UI).
+ipcMain.handle('kdl:site-clear-cookies', async (_e, origin) => {
+  const ses = browseSession();
+  try {
+    const host = origin ? new URL(origin).hostname : null;
+    const list = await ses.cookies.get(host ? { domain: host } : {});
+    for (const c of list) {
+      const url = (c.secure ? 'https://' : 'http://') + (c.domain.startsWith('.') ? c.domain.slice(1) : c.domain) + c.path;
+      try { await ses.cookies.remove(url, c.name); } catch { /* */ }
+    }
+    return { ok: true, removed: list.length };
+  } catch (err) { return { ok: false, error: String(err) }; }
+});
+
 ipcMain.handle('kdl:dl-hash', async (_e, id) => {
   const r = loadDlHistory().find((x) => x.id === id);
   if (!r || !fs.existsSync(r.path)) return { ok: false, error: 'fichier introuvable' };

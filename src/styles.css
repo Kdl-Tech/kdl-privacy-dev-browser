@@ -420,3 +420,13 @@ select.input { appearance: none; }
 .dl-os-btn:hover { border-color: var(--cyan); color: var(--fg-strong); background: var(--elev); }
 .dl-os-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; color: var(--turq); flex-shrink: 0; }
 .dl-os-btn small { color: var(--muted); margin-left: auto; font-size: 11px; }
+
+/* ═══ Espaces de travail / Outils dev ════════════════════════════════════ */
+.ws-item { padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+.ws-item:last-of-type { border-bottom: none; }
+.ws-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+.db-console { max-height: 160px; overflow: auto; }
+.db-err { font-family: ui-monospace,Consolas,monospace; font-size: 11px; color: var(--err);
+  background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25); border-radius: 6px;
+  padding: 6px 8px; margin-bottom: 5px; word-break: break-word; }
+select.site-perm { font-size: 12px; }

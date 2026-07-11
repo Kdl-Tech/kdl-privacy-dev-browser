@@ -87,6 +87,12 @@ function wireTab(tab) {
     // -3 = ERR_ABORTED (navigation volontairement interrompue) : pas une erreur affichable.
     if (e.errorCode && e.errorCode !== -3 && e.isMainFrame !== false) { tab.failed = true; renderTabs(); }
   });
+  // Console de la page (pour la boîte à outils dev) — conservée localement, jamais envoyée.
+  tab.console = [];
+  wv.addEventListener('console-message', (e) => {
+    if (e.level >= 1) { tab.console.push({ level: e.level, message: String(e.message || '').slice(0, 500) }); if (tab.console.length > 40) tab.console.shift(); }
+  });
+  wv.addEventListener('did-start-loading', () => { tab.console = []; });
   wv.addEventListener('page-title-updated', (e) => {
     tab.title = e.title || tab.title;
     if (isActive(tab)) document.title = 'KDL · ' + tab.title;
@@ -795,6 +801,149 @@ async function runGenAI(kind, confirmed) {
 
 document.getElementById('btn-ai').onclick = () => openAIPanel();
 document.getElementById('btn-downloads').onclick = () => openDownloadsPanel();
+
+// ===========================================================================
+// Centre de confidentialité par site
+// ===========================================================================
+const PERMS = [['camera', 'Caméra'], ['microphone', 'Microphone'], ['geolocation', 'Géolocalisation'], ['notifications', 'Notifications']];
+async function openSitePanel() {
+  const u = cur() ? cur().getURL() : '';
+  if (isHome(u)) return toast('Ouvrez d’abord un site.');
+  let origin = '', host = '', https = false;
+  try { const url = new URL(u); origin = url.origin; host = url.hostname; https = url.protocol === 'https:'; } catch { return toast('Page non applicable.'); }
+  const info = await window.kdl.siteInfo(origin);
+  const permRows = PERMS.map(([k, l]) => {
+    const v = info.perms[k] || 'default';
+    return `<div class="row"><span class="k">${l}</span><span class="v">
+      <select class="input site-perm" data-k="${k}" style="height:28px;width:auto">
+        <option value="default" ${v === 'default' ? 'selected' : ''}>Refusé (défaut)</option>
+        <option value="allow" ${v === 'allow' ? 'selected' : ''}>Autoriser</option>
+        <option value="deny" ${v === 'deny' ? 'selected' : ''}>Bloquer</option>
+      </select></span></div>`;
+  }).join('');
+  showPanel('Confidentialité du site', `
+    <div class="row"><span class="k">Domaine</span><span class="v">${esc(host)}</span></div>
+    <div class="row"><span class="k">Connexion</span><span class="v">${https ? '<span class="tag ok">HTTPS</span>' : '<span class="tag err">NON SÉCURISÉ</span>'}</span></div>
+    <div class="row"><span class="k">Cookies</span><span class="v">${info.cookies}</span></div>
+    <div class="field" style="padding-top:8px"><label>Permissions (refusées par défaut)</label></div>
+    ${permRows}
+    <button id="site-cookies" class="btn-full">Effacer les cookies du site</button>
+    <button id="site-data" class="btn-full">Effacer toutes les données du site</button>
+    <button id="site-reset" class="btn-full">Réinitialiser les permissions</button>
+    <small class="muted">Choix conservés par domaine, en local. Les permissions sensibles restent refusées tant que vous n'autorisez pas.</small>
+  `);
+  panelBody.querySelectorAll('.site-perm').forEach((s) => s.onchange = async () => { await window.kdl.permSet(origin, s.dataset.k, s.value); toast('Permission mise à jour.'); });
+  document.getElementById('site-cookies').onclick = async () => { const r = await window.kdl.siteClearCookies(origin); playClearFX(); toast(r.ok ? `Cookies effacés (${r.removed}).` : 'Échec.'); };
+  document.getElementById('site-data').onclick = async () => { playClearFX(); await window.kdl.clearSiteData(origin); toast('Données du site effacées.'); };
+  document.getElementById('site-reset').onclick = async () => { await window.kdl.permReset(origin); toast('Permissions réinitialisées.'); openSitePanel(); };
+}
+document.getElementById('btn-site').onclick = () => openSitePanel();
+
+// ===========================================================================
+// Espaces de travail & sessions (local)
+// ===========================================================================
+function getWs() {
+  let w = JSON.parse(localStorage.getItem('kdl-workspaces') || 'null');
+  if (!w) { w = [{ id: 'p', name: 'Personnel', tabs: [] }, { id: 'd', name: 'Développement', tabs: [] }, { id: 'k', name: 'KDL-TECH', tabs: [] }]; saveWs(w); }
+  return w;
+}
+function saveWs(w) { localStorage.setItem('kdl-workspaces', JSON.stringify(w)); }
+function currentOpenTabs() {
+  return tabs.map((t) => { let url = t.url; try { url = t.wv.getURL() || t.url; } catch { /* */ } return { url, title: t.title }; })
+    .filter((t) => t.url && !isHome(t.url));
+}
+function openWorkspacesPanel() {
+  const w = getWs();
+  const rows = w.map((ws, i) => `<div class="ws-item">
+    <div class="ws-top"><b>${esc(ws.name)}</b><span class="tag ok">${ws.tabs.length} onglet(s)</span></div>
+    <div class="dl-acts">
+      <button data-a="restore" data-i="${i}">Ouvrir</button>
+      <button data-a="save" data-i="${i}">Enregistrer la session ici</button>
+      <button data-a="rename" data-i="${i}">Renommer</button>
+      <button data-a="del" data-i="${i}">Supprimer</button>
+    </div></div>`).join('');
+  showPanel('Espaces de travail', `<div id="ws-list">${rows}</div>
+    <button id="ws-new" class="btn-full">Nouvel espace</button>
+    <button id="ws-reopen" class="btn-full">Rouvrir le dernier onglet fermé</button>
+    <button id="ws-export" class="btn-full">Exporter (JSON)</button>
+    <button id="ws-import" class="btn-full">Importer (JSON)</button>
+    <small class="muted">On n'enregistre que l'URL et le titre — jamais mots de passe, cookies ou données de formulaire.</small>`);
+  panelBody.querySelectorAll('[data-a]').forEach((b) => b.onclick = () => wsAction(b.dataset.a, +b.dataset.i));
+  document.getElementById('ws-new').onclick = () => { const n = prompt('Nom du nouvel espace :'); if (n) { const w2 = getWs(); w2.push({ id: 'w' + Date.now(), name: n.slice(0, 40), tabs: [] }); saveWs(w2); openWorkspacesPanel(); } };
+  document.getElementById('ws-reopen').onclick = () => { const url = closedStack.pop(); if (url) createTab(url); else toast('Aucun onglet à rouvrir.'); };
+  document.getElementById('ws-export').onclick = async () => { const r = await window.kdl.saveText('kdl-espaces.json', JSON.stringify(getWs(), null, 2)); toast(r.ok ? 'Exporté.' : 'Annulé.'); };
+  document.getElementById('ws-import').onclick = async () => { const r = await window.kdl.importFavs(); if (r.ok && Array.isArray(r.data)) { saveWs(r.data.filter((x) => x && x.name)); openWorkspacesPanel(); toast('Espaces importés.'); } else toast('Import annulé/invalide.'); };
+}
+function wsAction(a, i) {
+  const w = getWs(); const ws = w[i]; if (!ws) return;
+  if (a === 'restore') { if (!ws.tabs.length) return toast('Espace vide.'); ws.tabs.forEach((t) => createTab(t.url)); panel.classList.add('hidden'); toast('Espace « ' + ws.name + ' » ouvert.'); }
+  else if (a === 'save') { ws.tabs = currentOpenTabs(); saveWs(w); openWorkspacesPanel(); toast(`Session enregistrée (${ws.tabs.length}).`); }
+  else if (a === 'rename') { const n = prompt('Renommer :', ws.name); if (n) { ws.name = n.slice(0, 40); saveWs(w); openWorkspacesPanel(); } }
+  else if (a === 'del') { if (confirm('Supprimer l’espace « ' + ws.name + ' » ?')) { w.splice(i, 1); saveWs(w); openWorkspacesPanel(); } }
+}
+document.getElementById('btn-workspaces').onclick = () => openWorkspacesPanel();
+
+// ===========================================================================
+// Boîte à outils développeur
+// ===========================================================================
+async function openDevboxPanel() {
+  if (!cur() || isHome(cur().getURL())) return toast('Ouvrez d’abord un site.');
+  let d = {};
+  try {
+    const raw = await cur().executeJavaScript(`(function(){
+      var nav=(performance.getEntriesByType('navigation')||[])[0]||{};
+      var res=performance.getEntriesByType('resource')||[]; var host=location.hostname; var tp={};
+      res.forEach(function(r){try{var h=new URL(r.name).hostname;if(h&&h!==host)tp[h]=1;}catch(e){}});
+      return JSON.stringify({url:location.href,title:document.title,proto:location.protocol,
+        ctype:document.contentType||'',charset:document.characterSet||'',doctype:document.doctype?document.doctype.name:'—',
+        resCount:res.length,thirdParty:Object.keys(tp),loadMs:nav.duration?Math.round(nav.duration):0});
+    })()`, true);
+    d = JSON.parse(raw);
+  } catch { return toast('Analyse impossible sur cette page.'); }
+  const errs = (activeTab() && activeTab().console || []).filter((c) => c.level >= 2);
+  showPanel('Outils développeur', `
+    <div class="row"><span class="k">URL</span><span class="v">${esc(d.url)}</span></div>
+    <div class="row"><span class="k">Titre</span><span class="v">${esc(d.title || '—')}</span></div>
+    <div class="row"><span class="k">Protocole</span><span class="v">${esc(d.proto)} ${d.proto === 'https:' ? '<span class="tag ok">HTTPS</span>' : '<span class="tag err">HTTP</span>'}</span></div>
+    <div class="row"><span class="k">Type</span><span class="v">${esc(d.ctype)} · ${esc(d.charset)}</span></div>
+    <div class="row"><span class="k">Doctype</span><span class="v">${esc(d.doctype)}</span></div>
+    <div class="row"><span class="k">Chargement</span><span class="v">${d.loadMs ? d.loadMs + ' ms' : '—'}</span></div>
+    <div class="row"><span class="k">Requêtes</span><span class="v">${d.resCount}</span></div>
+    <div class="row"><span class="k">Domaines tiers</span><span class="v">${(d.thirdParty || []).length}</span></div>
+    <div class="dl-acts" style="margin:8px 0">
+      <button id="db-url">Copier l'URL</button>
+      <button id="db-title">Copier le titre</button>
+      <button id="db-md">Lien Markdown</button>
+      <button id="db-devtools">DevTools</button>
+      <button id="db-shot">Capture</button>
+    </div>
+    ${d.ctype && /json/i.test(d.ctype) ? '<button id="db-json" class="btn-full">Afficher le JSON formaté</button>' : ''}
+    <div class="field" style="padding-top:6px"><label>Erreurs console (${errs.length})</label></div>
+    <div class="db-console">${errs.length ? errs.map((e) => '<div class="db-err">' + esc(e.message) + '</div>').join('') : '<div class="empty">Aucune erreur console.</div>'}</div>
+    ${errs.length ? '<button id="db-explain" class="btn-full btn-accent">Expliquer la 1re erreur (KDL IA)</button>' : ''}
+    <div id="db-out" class="ai-out hidden"></div>
+  `);
+  const copy = (t) => { try { navigator.clipboard.writeText(t); toast('Copié.'); } catch { toast('Copie impossible.'); } };
+  document.getElementById('db-url').onclick = () => copy(d.url);
+  document.getElementById('db-title').onclick = () => copy(d.title || '');
+  document.getElementById('db-md').onclick = () => copy('[' + (d.title || d.url) + '](' + d.url + ')');
+  document.getElementById('db-devtools').onclick = () => cur() && cur().openDevTools();
+  document.getElementById('db-shot').onclick = () => document.getElementById('btn-shot').click();
+  const jb = document.getElementById('db-json');
+  if (jb) jb.onclick = async () => {
+    try { const body = await cur().executeJavaScript('document.body.innerText'); const pretty = JSON.stringify(JSON.parse(body), null, 2);
+      document.getElementById('db-out').classList.remove('hidden'); document.getElementById('db-out').innerHTML = '<pre style="white-space:pre-wrap;font-size:11px;margin:0">' + esc(pretty) + '</pre>'; }
+    catch { toast('JSON invalide.'); }
+  };
+  const eb = document.getElementById('db-explain');
+  if (eb) eb.onclick = async () => {
+    await ensureAI();
+    const out = document.getElementById('db-out'); out.classList.remove('hidden'); out.innerHTML = '<p class="muted">Analyse…</p>';
+    const res = await window.KDLAI.run('error', { url: d.url, text: errs[0].message, selection: '', hasPassword: false }, { confirmedSensitive: true });
+    out.innerHTML = res.ok ? '<div class="ai-out-h">Explication <span class="tag ok">' + esc(res.via || 'IA') + '</span></div><p>' + esc(res.text) + '</p>' : '<p class="muted">' + esc(res.reason || res.error || 'IA indisponible — activez KDL IA.') + '</p>';
+  };
+}
+document.getElementById('btn-devbox').onclick = () => openDevboxPanel();
 
 // Hook IA du mode lecture : réutilise le service (avec confirmation intégrée).
 window.KDLReader.setAIHook(async (kind, text) => {

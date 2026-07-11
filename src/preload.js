@@ -33,5 +33,10 @@ contextBridge.exposeInMainWorld('kdl', {
   dlRemove: (id) => ipcRenderer.invoke('kdl:dl-remove', id),
   dlClear: () => ipcRenderer.invoke('kdl:dl-clear'),
   dlHash: (id) => ipcRenderer.invoke('kdl:dl-hash', id),
-  onDlUpdate: (cb) => ipcRenderer.on('kdl:dl-update', (_e, rec) => cb(rec))
+  onDlUpdate: (cb) => ipcRenderer.on('kdl:dl-update', (_e, rec) => cb(rec)),
+  permGet: (origin) => ipcRenderer.invoke('kdl:perm-get', origin),
+  permSet: (origin, name, value) => ipcRenderer.invoke('kdl:perm-set', { origin, name, value }),
+  permReset: (origin) => ipcRenderer.invoke('kdl:perm-reset', origin),
+  siteInfo: (origin) => ipcRenderer.invoke('kdl:site-info', origin),
+  siteClearCookies: (origin) => ipcRenderer.invoke('kdl:site-clear-cookies', origin)
 });
