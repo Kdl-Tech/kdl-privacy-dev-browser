@@ -32,6 +32,7 @@ function showPanel(title, html) {
   panel.classList.remove('hidden');
 }
 document.getElementById('panel-close').onclick = () => panel.classList.add('hidden');
+document.getElementById('panel-backdrop').onclick = () => panel.classList.add('hidden');
 
 function esc(s) {
   return String(s == null ? '' : s)
@@ -585,6 +586,158 @@ function toggleMenu() {
 menuBtn.onclick = (e) => { e.stopPropagation(); toggleMenu(); };
 menuEl.querySelectorAll('.menu-item').forEach((it) => it.addEventListener('click', () => closeMenu()));
 document.addEventListener('click', (e) => { if (!menuEl.classList.contains('hidden') && !menuEl.contains(e.target) && e.target !== menuBtn) closeMenu(); });
+
+// ===========================================================================
+// KDL IA — panneau assistant (local d'abord ; Ollama et « Mon IA » facultatifs)
+// ===========================================================================
+let aiInited = false;
+async function ensureAI() { if (!aiInited) { await window.KDLAI.init(); aiInited = true; } }
+
+const PROV_LABEL = {
+  lite: '<span class="tag ok">Locale</span>', 'lite-missing': '<span class="tag warn">modèle à installer</span>',
+  ollama: '<span class="tag ok">Ollama · local</span>', 'ollama-missing': '<span class="tag warn">Ollama indisponible</span>',
+  byok: '<span class="tag warn">Mon IA · distant</span>', 'byok-missing': '<span class="tag warn">clé requise</span>',
+  none: '<span class="tag warn">aucun modèle</span>', off: '<span class="tag err">désactivée</span>',
+};
+
+async function getPageForAI() {
+  if (!cur()) return { url: '', text: '', selection: '', hasPassword: false };
+  return window.KDLAI.gatherPage(cur());
+}
+
+function aiShowOut(html) {
+  const out = document.getElementById('ai-out');
+  if (out) { out.innerHTML = html; out.classList.remove('hidden'); }
+}
+
+async function openAIPanel(view) {
+  await ensureAI();
+  const s = window.KDLAI.getStatus();
+  if (view === 'byok') return renderByok(s);
+  const modes = [['auto', 'Auto'], ['lite', 'KDL IA Lite'], ['ollama', 'Ollama'], ['byok', 'Mon IA'], ['off', 'Désactivée']];
+  const genDisabled = ['none', 'off', 'lite', 'lite-missing', 'ollama-missing', 'byok-missing'].includes(s.provider) && s.provider !== 'ollama' && s.provider !== 'byok';
+  showPanel('KDL IA', `
+    <div class="ai-status">
+      <span class="ai-badge">${PROV_LABEL[s.provider] || ''}</span>
+      <small class="muted" style="margin:0">Fournisseur actif : <b>${esc(s.provider)}</b>${s.remote ? ' · le texte quitte votre machine' : ' · traitement local'}</small>
+    </div>
+    <div class="field" style="padding-top:4px"><label>Fournisseur</label></div>
+    <div class="ai-modes">${modes.map(([m, l]) => `<button class="ai-mode ${s.mode === m ? 'on' : ''}" data-mode="${m}">${l}</button>`).join('')}</div>
+    ${s.mode === 'ollama' ? renderOllamaPick(s) : ''}
+    ${s.mode === 'byok' ? `<div class="ai-sub"><span class="muted">${s.byok.configured ? 'IA connectée : <b>' + esc(s.byok.provider || '') + '</b> · ' + esc(s.byok.model || '') : 'Aucune IA personnelle connectée.'}</span>
+       <button id="ai-byok-cfg" class="btn-full">${s.byok.configured ? 'Modifier ma connexion IA' : 'Connecter mon IA (clé API)'}</button></div>` : ''}
+    ${s.provider === 'lite-missing' ? `<div class="notice">Le modèle KDL IA Lite n'est pas installé. Installation volontaire depuis les paramètres (téléchargement gratuit, aucune carte graphique requise).</div>` : ''}
+
+    <div class="field" style="padding-top:6px"><label>Outils locaux (sans modèle)</label></div>
+    <div class="ai-actions">
+      <button class="ai-chip" data-local="resume">Résumé</button>
+      <button class="ai-chip" data-local="points">Points clés</button>
+      <button class="ai-chip" data-local="mots">Mots-clés</button>
+    </div>
+    <div class="field" style="padding-top:6px"><label>Assistant IA${s.remote ? ' (distant)' : ''}</label></div>
+    <div class="ai-actions">
+      ${['summarize:Résumer', 'explain:Expliquer', 'simplify:Simplifier', 'translate:Traduire', 'fiche:Fiche'].map((x) => {
+        const [k, l] = x.split(':'); return `<button class="ai-chip gen" data-gen="${k}">${l}</button>`;
+      }).join('')}
+    </div>
+    <div class="field"><label for="ai-len">Longueur des réponses</label>
+      <input id="ai-len" type="range" min="96" max="512" step="32" value="${s.maxTokens}"></div>
+    <div id="ai-out" class="ai-out hidden"></div>
+    <small class="muted">KDL IA Lite est un petit modèle local — utile pour résumer, expliquer, traduire de courts extraits ; ce n'est pas une grande IA cloud. L'IA n'analyse la page qu'à votre demande et n'accède jamais aux mots de passe, cookies ou autres onglets.</small>
+  `);
+  panelBody.querySelectorAll('.ai-mode').forEach((b) => b.onclick = () => { window.KDLAI.setMode(b.dataset.mode); openAIPanel(); });
+  panelBody.querySelectorAll('[data-local]').forEach((b) => b.onclick = () => runLocalAI(b.dataset.local));
+  panelBody.querySelectorAll('[data-gen]').forEach((b) => b.onclick = () => runGenAI(b.dataset.gen, false));
+  const len = document.getElementById('ai-len'); if (len) len.onchange = () => window.KDLAI.setMaxTokens(+len.value);
+  const cfg = document.getElementById('ai-byok-cfg'); if (cfg) cfg.onclick = () => openAIPanel('byok');
+  const osel = document.getElementById('ai-ollama-model'); if (osel) osel.onchange = () => window.KDLAI.setOllamaModel(osel.value);
+}
+
+function renderOllamaPick(s) {
+  if (!s.ollama.available) return `<div class="notice">Ollama n'est pas détecté sur 127.0.0.1:11434. Facultatif — installez-le vous-même si vous le souhaitez.</div>`;
+  if (!s.ollama.models.length) return `<div class="notice">Ollama détecté, mais aucun modèle installé. Installez un modèle avec Ollama (aucun téléchargement automatique ici).</div>`;
+  return `<div class="ai-sub"><label class="muted">Modèle Ollama</label>
+    <select id="ai-ollama-model" class="input">${s.ollama.models.map((m) => `<option ${m === s.ollamaModel ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>`;
+}
+
+function renderByok(s) {
+  const provs = (s.byok.providers || []);
+  const sel = s.byok.provider || (provs[0] && provs[0].id) || 'anthropic';
+  showPanel('Connecter mon IA (API)', `
+    <div class="notice">Vous connectez <b>votre propre</b> IA avec <b>votre</b> clé API. Fournisseur <b>distant</b> : le texte soumis quitte votre machine vers le service choisi. Aucune clé n'est fournie par KDL ; elle est stockée localement et n'est jamais partagée.</div>
+    <div class="field"><label>Fournisseur</label></div>
+    <select id="by-prov" class="input">${provs.map((p) => `<option value="${esc(p.id)}" data-def="${esc(p.defaultModel)}" ${p.id === sel ? 'selected' : ''}>${esc(p.label)}</option>`).join('')}</select>
+    <div id="by-baseurl-wrap" class="hidden"><div class="field"><label>URL de base (compatible OpenAI)</label></div>
+      <input id="by-baseurl" class="input" type="text" placeholder="https://mon-endpoint/v1" value="${esc(s.byok.baseUrl || '')}"></div>
+    <div class="field"><label>Modèle</label></div>
+    <input id="by-model" class="input" type="text" placeholder="modèle" value="${esc(s.byok.model || '')}">
+    <div class="field"><label>Clé API</label></div>
+    <input id="by-key" class="input" type="password" placeholder="${s.byok.hasKey ? '•••••• (clé déjà enregistrée)' : 'votre clé API'}" autocomplete="off">
+    <button id="by-save" class="btn-full btn-accent">Enregistrer</button>
+    ${s.byok.configured ? '<button id="by-clear" class="btn-full">Déconnecter / effacer la clé</button>' : ''}
+    <button id="by-back" class="btn-full">Retour</button>
+    <small class="muted">La clé est stockée dans un fichier local protégé, jamais affichée ni envoyée ailleurs qu'au service que vous choisissez.</small>
+  `);
+  const prov = document.getElementById('by-prov');
+  const model = document.getElementById('by-model');
+  const baseWrap = document.getElementById('by-baseurl-wrap');
+  const syncProv = () => {
+    const opt = prov.options[prov.selectedIndex];
+    if (!model.value) model.placeholder = opt.dataset.def || 'modèle';
+    baseWrap.classList.toggle('hidden', prov.value !== 'custom');
+  };
+  prov.onchange = syncProv; syncProv();
+  document.getElementById('by-back').onclick = () => openAIPanel();
+  document.getElementById('by-save').onclick = async () => {
+    const cfg = { provider: prov.value, model: model.value.trim() || (prov.options[prov.selectedIndex].dataset.def || ''), key: document.getElementById('by-key').value, baseUrl: (document.getElementById('by-baseurl') || {}).value || '' };
+    const res = await window.kdl.byokSet(cfg);
+    if (!res.ok) return toast('Échec : ' + (res.error || 'clé requise'));
+    await window.KDLAI.refreshByok(); window.KDLAI.setMode('byok'); toast('IA personnelle connectée.'); openAIPanel();
+  };
+  const clr = document.getElementById('by-clear');
+  if (clr) clr.onclick = async () => { await window.kdl.byokClear(); await window.KDLAI.refreshByok(); toast('Clé effacée.'); openAIPanel('byok'); };
+}
+
+async function runLocalAI(kind) {
+  const page = await getPageForAI();
+  const text = (page.selection && page.selection.trim().length > 20) ? page.selection : page.text;
+  if (!text) return aiShowOut('<p class="muted">Aucun texte exploitable sur cette page.</p>');
+  const r = window.KDLAI.runLocal(kind, text);
+  if (kind === 'resume') aiShowOut('<div class="ai-out-h">Résumé <span class="tag ok">local</span></div><p>' + esc(r.text) + '</p>');
+  else if (kind === 'points') aiShowOut('<div class="ai-out-h">Points clés <span class="tag ok">local</span></div><ul>' + r.points.map((p) => '<li>' + esc(p) + '</li>').join('') + '</ul>');
+  else if (kind === 'mots') aiShowOut('<div class="ai-out-h">Mots-clés <span class="tag ok">local</span></div><div class="kw">' + r.mots.map((k) => '<span class="kw-item">' + esc(k.term) + '</span>').join('') + '</div>');
+}
+
+async function runGenAI(kind, confirmed) {
+  const page = await getPageForAI();
+  if (!page.text && !page.selection) return aiShowOut('<p class="muted">Aucun texte à analyser.</p>');
+  aiShowOut('<p class="muted">Génération en cours…</p>');
+  const res = await window.KDLAI.run(kind, page, { confirmedSensitive: confirmed });
+  if (res.needConfirm) {
+    aiShowOut(`<div class="notice">${res.remote ? 'Fournisseur <b>distant</b> : ce texte va quitter votre machine.' : 'Page potentiellement <b>sensible</b>.'} Aperçu de ce qui sera envoyé :</div>
+      <p class="ai-preview">${esc(res.preview)}…</p>
+      <button id="ai-confirm" class="btn-full btn-accent">Confirmer l'envoi</button>`);
+    const c = document.getElementById('ai-confirm'); if (c) c.onclick = () => runGenAI(kind, true);
+    return;
+  }
+  if (res.ok) return aiShowOut('<div class="ai-out-h">Assistant IA <span class="tag ok">' + esc(res.via || 'IA') + '</span></div><p>' + esc(res.text) + '</p>');
+  if (res.fallback) {
+    aiShowOut(`<div class="notice">${esc(res.reason)}. Vous pouvez utiliser un outil local :</div>
+      <button class="ai-chip" data-fb="resume">Résumé local</button> <button class="ai-chip" data-fb="points">Points clés</button>`);
+    panelBody.querySelectorAll('[data-fb]').forEach((b) => b.onclick = () => runLocalAI(b.dataset.fb));
+    return;
+  }
+  aiShowOut('<p class="muted">' + esc(res.error || 'IA indisponible.') + '</p>');
+}
+
+document.getElementById('btn-ai').onclick = () => openAIPanel();
+
+// Hook IA du mode lecture : réutilise le service (avec confirmation intégrée).
+window.KDLReader.setAIHook(async (kind, text) => {
+  await ensureAI();
+  const res = await window.KDLAI.run(kind, { url: cur() ? cur().getURL() : '', text, selection: '', hasPassword: false }, { confirmedSensitive: true });
+  return res.ok ? { ok: true, text: res.text } : { ok: false, error: res.reason || res.error || 'IA indisponible' };
+});
 
 // --- Démarrage : un onglet d'accueil ---
 createTab(HOME);

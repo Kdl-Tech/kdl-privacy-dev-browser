@@ -11,6 +11,7 @@
 <body>
   <!-- Barre d'onglets -->
   <div id="tabbar">
+    <img id="brand-logo" src="../assets/icon-256.png" alt="KDL TECH" title="KDL Privacy Dev Browser" />
     <div id="tabs"></div>
     <button id="newtab" class="ico-btn" title="Nouvel onglet (Ctrl+T)" aria-label="Nouvel onglet">
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
@@ -40,6 +41,8 @@
     </form>
 
     <div class="nav-group">
+      <button id="btn-ai" class="ico-btn" title="KDL IA (assistant local)" aria-label="KDL IA">
+        <svg viewBox="0 0 24 24"><path d="m12 3 1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/></svg></button>
       <button id="btn-favs" class="ico-btn" title="Favoris" aria-label="Favoris">
         <svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></svg></button>
       <button id="btn-shot" class="ico-btn" title="Capture d'écran" aria-label="Capture d'écran">
@@ -78,18 +81,22 @@
     <button data-w="390">Mobile</button>
   </div>
 
-  <main id="viewport">
-    <aside id="panel" class="panel hidden" role="dialog" aria-label="Panneau">
-      <div class="panel-head"><span id="panel-title">Panneau</span>
-        <button id="panel-close" class="ico-btn" aria-label="Fermer">
-          <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
-      <div id="panel-body"></div>
-    </aside>
-  </main>
+  <main id="viewport"></main>
+
+  <div id="panel-backdrop"></div>
+  <aside id="panel" class="panel hidden" role="dialog" aria-label="Panneau">
+    <div class="panel-head"><span id="panel-title">Panneau</span>
+      <button id="panel-close" class="ico-btn" aria-label="Fermer">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <div id="panel-body"></div>
+  </aside>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <script src="ai/text-engine.js"></script>
+  <script src="ai/privacy-filter.js"></script>
+  <script src="ai/prompt-templates.js"></script>
+  <script src="ai/ai-service.js"></script>
   <script src="reader/extractor.js"></script>
   <script src="reader/reader-controller.js"></script>
   <script src="renderer.js"></script>

@@ -15,5 +15,14 @@ contextBridge.exposeInMainWorld('kdl', {
   exportFavs: (data) => ipcRenderer.invoke('kdl:export-favs', data),
   importFavs: () => ipcRenderer.invoke('kdl:import-favs'),
   saveText: (name, content) => ipcRenderer.invoke('kdl:save-text', { name, content }),
+  ollamaDetect: () => ipcRenderer.invoke('kdl:ollama-detect'),
+  ollamaGenerate: (model, prompt, num_predict) => ipcRenderer.invoke('kdl:ollama-generate', { model, prompt, num_predict }),
+  aiModelInfo: () => ipcRenderer.invoke('kdl:ai-model-info'),
+  aiModelDelete: (id) => ipcRenderer.invoke('kdl:ai-model-delete', id),
+  aiModelDownload: (id) => ipcRenderer.invoke('kdl:ai-model-download', { id }),
+  byokConfig: () => ipcRenderer.invoke('kdl:byok-config'),
+  byokSet: (cfg) => ipcRenderer.invoke('kdl:byok-set', cfg),
+  byokClear: () => ipcRenderer.invoke('kdl:byok-clear'),
+  byokGenerate: (prompt, maxTokens) => ipcRenderer.invoke('kdl:byok-generate', { prompt, maxTokens }),
   onDownload: (cb) => ipcRenderer.on('kdl:download', (_e, info) => cb(info))
 });
