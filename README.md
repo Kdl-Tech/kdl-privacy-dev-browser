@@ -6,6 +6,25 @@ Pensé pour Linux Mint (fonctionne aussi sur les autres plateformes Electron).
 > **Logiciel libre et gratuit** — licence MIT. Aucune dépendance payante, aucun service
 > propriétaire obligatoire, aucun compte requis, aucun tracking.
 
+## Nouveautés — 1.3.0 (IA locale + mode lecture)
+
+- **KDL IA** (panneau assistant) à trois niveaux, IA **facultative** :
+  - **KDL IA Lite** — petite IA **locale, gratuite, sans compte ni carte graphique** ;
+    outils locaux immédiats (résumé extractif, points clés, mots-clés) + modèle génératif
+    à installer volontairement (CPU/WASM). Voir `docs/KDL_AI_LITE.md`.
+  - **Ollama** local facultatif (jamais installé/pull auto, jamais de cloud).
+  - **Mon IA (BYOK)** — connectez **votre** compte via API (Claude, OpenAI/Codex, Gemini,
+    Grok, endpoint compatible OpenAI) avec **votre** clé, stockée localement, jamais exposée.
+- **Mode lecture** sans distraction : extraction propre, 3 thèmes, taille/largeur/interligne,
+  temps de lecture, export **Markdown**, impression **PDF**, outils locaux + IA.
+- Confidentialité IA stricte (`docs/KDL_AI_PRIVACY.md`) : jamais de mots de passe/cookies/
+  autres onglets ; confirmation sur page sensible ou envoi distant.
+- Effet visuel sur « effacer la session » (respecte `prefers-reduced-motion`).
+- Logo KDL TECH dans la barre du navigateur.
+- Distribution multi-plateforme configurée (`docs/OFFLINE_EDITION_ARCHITECTURE.md`) :
+  `.AppImage`/`.deb` (Linux), `.exe` (Windows), `.dmg` (macOS).
+- L'IA n'est **jamais** requise : le navigateur fonctionne sans modèle, hors ligne, sans Ollama.
+
 ## Nouveautés — 1.2.0 (refonte visuelle premium)
 
 - **Identité KDL TECH** : logo officiel, icônes d'application régénérées, palette

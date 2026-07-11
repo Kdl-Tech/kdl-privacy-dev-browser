@@ -1,5 +1,20 @@
 # Changelog — KDL Privacy Dev Browser
 
+## 1.3.0 — IA locale facultative + mode lecture
+- KDL IA (panneau) : KDL IA Lite (local, outils non génératifs actifs + modèle génératif
+  à installer), Ollama local facultatif, « Mon IA » BYOK via API (Claude/OpenAI/Gemini/Grok
+  ou compatible OpenAI ; clé locale 0600, jamais exposée).
+- Mode lecture pro : extraction assainie, 3 thèmes, réglages typo, temps de lecture,
+  export Markdown, impression/PDF, outils locaux + actions IA.
+- Confidentialité IA : jamais de mots de passe/cookies/autres onglets ; détection des
+  pages sensibles ; confirmation avant envoi distant.
+- Effet visuel « effacer la session » (balayage cyan, reduced-motion respecté).
+- Logo KDL dans la barre ; panneaux passés en drawer (au-dessus du webview) + fond assombri.
+- Distribution multi-plateforme configurée (electron-builder : AppImage/deb, exe, dmg).
+- Docs : KDL_AI_LITE, KDL_AI_PROVIDERS, KDL_AI_PRIVACY, KDL_AI_MODEL_MANAGEMENT,
+  OFFLINE_EDITION_ARCHITECTURE, PRIVACY_SHIELD_ROADMAP.
+- Le navigateur reste 100 % fonctionnel sans IA, hors ligne, sans Ollama, sans WebGPU.
+
 ## 1.2.0 — Refonte visuelle premium (identité KDL TECH)
 - Logo officiel + icônes d'application régénérées depuis la marque KDL TECH.
 - Jeu d'icônes SVG cohérent (suppression de tous les emojis d'interface).

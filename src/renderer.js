@@ -503,7 +503,7 @@ document.getElementById('btn-settings').onclick = () => {
 
 // --- À propos / version ---
 document.getElementById('btn-about').onclick = async () => {
-  let info = { name: 'KDL Privacy Dev Browser', version: '1.2.0' };
+  let info = { name: 'KDL Privacy Dev Browser', version: '1.3.0' };
   try { info = await window.kdl.about(); } catch { /* */ }
   showPanel('À propos', `
     <div class="row"><span class="k">Nom</span><span class="v">${esc(info.name)}</span></div>

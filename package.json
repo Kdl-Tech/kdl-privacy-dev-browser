@@ -1,18 +1,64 @@
 {
   "name": "kdl-privacy-dev-browser",
-  "version": "1.2.0",
-  "description": "KDL Privacy Dev Browser — navigateur léger orienté développeur, confidentialité et audit web.",
+  "version": "1.3.0",
+  "description": "KDL Privacy Dev Browser — navigateur léger, privé et orienté développeur, avec IA locale facultative.",
   "main": "src/main.js",
   "author": "KDL-TECH",
   "license": "MIT",
   "private": true,
+  "homepage": "https://kdl-tech.fr/kdl-privacy-dev-browser/",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build": "electron-builder",
-    "audit:secrets": "node scripts/check-secrets.js"
+    "audit:secrets": "node scripts/check-secrets.js",
+    "dist": "electron-builder",
+    "dist:linux": "electron-builder --linux AppImage deb",
+    "dist:win": "electron-builder --win nsis portable",
+    "dist:mac": "electron-builder --mac dmg"
   },
   "devDependencies": {
-    "electron": "^42.4.1"
+    "electron": "^42.4.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "fr.kdl-tech.privacy-dev-browser",
+    "productName": "KDL Privacy Dev Browser",
+    "copyright": "© KDL-TECH — MIT",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json",
+      "!**/*.bak*",
+      "!**/*.map"
+    ],
+    "extraResources": [],
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Network;WebBrowser",
+      "icon": "build/icon.png",
+      "maintainer": "KDL-TECH",
+      "desktop": {
+        "Name": "KDL Privacy Dev Browser",
+        "Comment": "Navigateur privé, orienté développeur, avec IA locale facultative",
+        "Categories": "Network;WebBrowser;",
+        "Keywords": "browser;privacy;dev;ai;ia;onion;"
+      }
+    },
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png"
+    }
   }
 }
