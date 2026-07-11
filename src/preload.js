@@ -14,5 +14,6 @@ contextBridge.exposeInMainWorld('kdl', {
   about: () => ipcRenderer.invoke('kdl:about'),
   exportFavs: (data) => ipcRenderer.invoke('kdl:export-favs', data),
   importFavs: () => ipcRenderer.invoke('kdl:import-favs'),
+  saveText: (name, content) => ipcRenderer.invoke('kdl:save-text', { name, content }),
   onDownload: (cb) => ipcRenderer.on('kdl:download', (_e, info) => cb(info))
 });

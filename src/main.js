@@ -180,6 +180,19 @@ ipcMain.handle('kdl:import-favs', async () => {
   } catch (err) { return { ok: false, error: String(err) }; }
 });
 
+// Enregistrement local d'un texte (export Markdown du mode lecture, etc.).
+// Aucun cloud ; dialogue natif ; l'utilisateur choisit la destination.
+ipcMain.handle('kdl:save-text', async (_e, { name, content } = {}) => {
+  if (typeof content !== 'string') return { ok: false, error: 'contenu invalide' };
+  const safe = (name || 'kdl-export.txt').replace(/[^\w.\- ]+/g, '_').slice(0, 120);
+  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+    title: 'Enregistrer', defaultPath: path.join(os.homedir(), 'Bureau', safe),
+  });
+  if (canceled || !filePath) return { ok: false, canceled: true };
+  try { fs.writeFileSync(filePath, content); return { ok: true, file: filePath }; }
+  catch (err) { return { ok: false, error: String(err) }; }
+});
+
 // Capture d'écran de la page (webContents du <webview>).
 ipcMain.handle('kdl:screenshot', async (_e, wcId) => {
   try {

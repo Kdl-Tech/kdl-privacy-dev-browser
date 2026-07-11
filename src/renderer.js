@@ -321,8 +321,53 @@ document.getElementById('btn-shot').onclick = async () => {
   } catch (err) { toast('Capture impossible : ' + err); }
 };
 
+// --- Mode lecture (sans distraction) ---
+document.getElementById('btn-reader').onclick = () => {
+  if (!cur()) return;
+  const u = cur().getURL();
+  if (isHome(u)) return toast('Le mode lecture s’utilise sur une page web.');
+  window.KDLReader.open(cur());
+};
+
+// --- Effet visuel « effacement » : balayage cyan + désintégration de particules.
+// Différent des flammes DDG ; respecte prefers-reduced-motion.
+function playClearFX() {
+  try {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const W = window.innerWidth, H = window.innerHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
+    const cvs = document.createElement('canvas');
+    cvs.width = W * dpr; cvs.height = H * dpr;
+    cvs.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none';
+    document.body.appendChild(cvs);
+    const ctx = cvs.getContext('2d'); ctx.scale(dpr, dpr);
+    const parts = [];
+    for (let i = 0; i < 90; i++) parts.push({
+      x: Math.random() * W, y: H * 0.3 + Math.random() * H * 0.55, r: 1 + Math.random() * 2.6,
+      vx: (Math.random() - 0.5) * 1.1, vy: -1.4 - Math.random() * 2.6, life: 0, max: 38 + Math.random() * 34,
+      hue: 186 + Math.random() * 16,
+    });
+    const t0 = performance.now(), DUR = 950;
+    (function frame(now) {
+      const el = now - t0, k = el / DUR, sweepX = k * W * 1.3;
+      ctx.clearRect(0, 0, W, H);
+      const g = ctx.createLinearGradient(sweepX - 170, 0, sweepX, 0);
+      g.addColorStop(0, 'rgba(6,182,212,0)'); g.addColorStop(1, 'rgba(34,211,238,' + (0.22 * (1 - k)) + ')');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, Math.max(0, sweepX), H);
+      ctx.strokeStyle = 'rgba(34,211,238,' + (0.55 * (1 - k)) + ')'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sweepX, 0); ctx.lineTo(sweepX, H); ctx.stroke();
+      for (const p of parts) {
+        if (p.x < sweepX) { p.life++; p.x += p.vx; p.y += p.vy; p.vy += 0.02; }
+        const a = Math.max(0, 1 - p.life / p.max); if (a <= 0) continue;
+        ctx.fillStyle = 'hsla(' + p.hue + ',90%,62%,' + a + ')'; ctx.fillRect(p.x, p.y, p.r, p.r);
+      }
+      if (el < DUR) requestAnimationFrame(frame); else cvs.remove();
+    })(t0);
+  } catch { /* l'effet ne doit jamais casser l'action */ }
+}
+
 // --- Nettoyer le site courant (session persist:kdl) ---
 document.getElementById('btn-clean').onclick = async () => {
+  playClearFX();
   let origin = '';
   try { origin = new URL(cur().getURL()).origin; } catch { /* page locale */ }
   try { await cur().executeJavaScript('try{localStorage.clear();sessionStorage.clear();}catch(e){};true;', true); } catch { /* */ }
@@ -452,7 +497,7 @@ document.getElementById('btn-settings').onclick = () => {
   document.getElementById('s-hist').onchange = (e) => { settings.noHistory = e.target.checked; saveSettings(); };
   document.getElementById('s-close').onchange = (e) => { settings.clearOnClose = e.target.checked; saveSettings(); };
   document.getElementById('s-3pc').onchange = async (e) => { settings.block3p = e.target.checked; saveSettings(); await window.kdl.thirdPartyCookies(e.target.checked); };
-  document.getElementById('s-clearnow').onclick = async () => { await window.kdl.clearAll(); toast('Données de navigation effacées (favoris conservés).'); };
+  document.getElementById('s-clearnow').onclick = async () => { playClearFX(); await window.kdl.clearAll(); toast('Données de navigation effacées (favoris conservés).'); };
 };
 
 // --- À propos / version ---
