@@ -6,3 +6,4 @@ out/
 .env
 .env.*
 captures/
+.backups-redesign-*/

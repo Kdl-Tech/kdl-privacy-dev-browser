@@ -40,7 +40,8 @@ function createWindow() {
     height: 820,
     minWidth: 720,
     minHeight: 480,
-    backgroundColor: '#15171c',
+    backgroundColor: '#020817',
+    icon: path.join(__dirname, '..', 'assets', 'icon-256.png'),
     title: 'KDL Privacy Dev Browser',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

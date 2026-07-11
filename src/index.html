@@ -2,45 +2,73 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
+  <!-- img-src autorise https: uniquement pour les favicons d'onglets (images, jamais de script). -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self';" />
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; script-src 'self';" />
   <title>KDL Privacy Dev Browser</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- Barre d'onglets -->
   <div id="tabbar">
     <div id="tabs"></div>
-    <button id="newtab" title="Nouvel onglet (Ctrl+T)">+</button>
+    <button id="newtab" class="ico-btn" title="Nouvel onglet (Ctrl+T)" aria-label="Nouvel onglet">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
   </div>
 
+  <!-- Barre de navigation -->
   <header id="toolbar">
     <div class="nav-group">
-      <button id="back" title="Précédent">‹</button>
-      <button id="forward" title="Suivant">›</button>
-      <button id="reload" title="Recharger">⟳</button>
-      <button id="home" title="Accueil">⌂</button>
+      <button id="back" class="ico-btn" title="Précédent (Alt+←)" aria-label="Précédent">
+        <svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button>
+      <button id="forward" class="ico-btn" title="Suivant (Alt+→)" aria-label="Suivant">
+        <svg viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></svg></button>
+      <button id="reload" class="ico-btn" title="Recharger (Ctrl+R)" aria-label="Recharger">
+        <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-.6 4"/><path d="M20 5v6h-6"/></svg></button>
+      <button id="home" class="ico-btn" title="Accueil" aria-label="Accueil">
+        <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 10v9h12v-9"/></svg></button>
     </div>
 
-    <form id="urlform">
-      <span id="lock" class="lock" title="Sécurité">·</span>
-      <input id="urlbar" type="text" spellcheck="false" autocomplete="off"
+    <form id="urlform" role="search">
+      <span id="lock" class="lock" data-state="neutral" title="Sécurité de la connexion" aria-hidden="true"></span>
+      <input id="urlbar" type="text" spellcheck="false" autocomplete="off" aria-label="Adresse ou recherche"
              placeholder="Rechercher sur DuckDuckGo ou saisir une URL" />
+      <button id="btn-fav" class="ico-btn in-url" title="Ajouter aux favoris (Ctrl+D)" aria-label="Favori">
+        <svg viewBox="0 0 24 24"><path d="m12 4 2.5 5 5.5.8-4 3.9 1 5.5-5-2.6-5 2.6 1-5.5-4-3.9 5.5-.8z"/></svg>
+      </button>
     </form>
 
     <div class="nav-group">
-      <button id="btn-fav" title="Ajouter/retirer des favoris (Ctrl+D)">☆</button>
-      <button id="btn-favs" title="Favoris">★≡</button>
-      <button id="btn-info" title="Infos page">ⓘ</button>
-      <button id="btn-audit" title="Audit léger">✓</button>
-      <button id="btn-shot" title="Capture écran">▣</button>
-      <button id="btn-devtools" title="DevTools">{ }</button>
-      <button id="btn-clean" title="Nettoyer le site">🧹</button>
-      <button id="btn-onion" title="Onion Search">🧅</button>
-      <button id="btn-settings" title="Confidentialité">⚙</button>
-      <button id="btn-about" title="À propos">?</button>
+      <button id="btn-favs" class="ico-btn" title="Favoris" aria-label="Favoris">
+        <svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></svg></button>
+      <button id="btn-shot" class="ico-btn" title="Capture d'écran" aria-label="Capture d'écran">
+        <svg viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.2"/></svg></button>
+      <div class="menu-wrap">
+        <button id="btn-menu" class="ico-btn" title="Menu" aria-label="Menu" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+        <div id="menu" class="menu hidden" role="menu" aria-label="Outils">
+          <button id="btn-info" class="menu-item" role="menuitem">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg><span>Infos page</span></button>
+          <button id="btn-audit" class="menu-item" role="menuitem">
+            <svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.4 3 8 7 10 4-2 7-5.6 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg><span>Audit léger</span></button>
+          <button id="btn-devtools" class="menu-item" role="menuitem">
+            <svg viewBox="0 0 24 24"><path d="m9 8-4 4 4 4"/><path d="m15 8 4 4-4 4"/></svg><span>DevTools</span></button>
+          <button id="btn-clean" class="menu-item" role="menuitem">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/></svg><span>Effacer le site</span></button>
+          <button id="btn-onion" class="menu-item" role="menuitem">
+            <svg viewBox="0 0 24 24"><path d="m12 2 8 4-8 4-8-4 8-4Z"/><path d="m4 12 8 4 8-4"/><path d="m4 17 8 4 8-4"/></svg><span>Onion Search</span></button>
+          <div class="menu-sep"></div>
+          <button id="btn-settings" class="menu-item" role="menuitem">
+            <svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.4 3 8 7 10 4-2 7-5.6 7-10V6l-7-3Z"/></svg><span>Confidentialité</span></button>
+          <button id="btn-about" class="menu-item" role="menuitem">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.6"/><path d="M12 17h.01"/></svg><span>À propos</span></button>
+        </div>
+      </div>
     </div>
   </header>
 
+  <!-- Barre responsive (masquée par défaut, Ctrl+Shift+M) -->
   <div id="responsive-bar" class="hidden">
     <span>Affichage :</span>
     <button data-w="0" class="active">Desktop</button>
@@ -49,13 +77,15 @@
   </div>
 
   <main id="viewport">
-    <aside id="panel" class="panel hidden">
-      <div class="panel-head"><span id="panel-title">Panneau</span><button id="panel-close">✕</button></div>
+    <aside id="panel" class="panel hidden" role="dialog" aria-label="Panneau">
+      <div class="panel-head"><span id="panel-title">Panneau</span>
+        <button id="panel-close" class="ico-btn" aria-label="Fermer">
+          <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
       <div id="panel-body"></div>
     </aside>
   </main>
 
-  <div id="toast" class="toast hidden"></div>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <script src="renderer.js"></script>
 </body>

@@ -6,6 +6,21 @@ Pensé pour Linux Mint (fonctionne aussi sur les autres plateformes Electron).
 > **Logiciel libre et gratuit** — licence MIT. Aucune dépendance payante, aucun service
 > propriétaire obligatoire, aucun compte requis, aucun tracking.
 
+## Nouveautés — 1.2.0 (refonte visuelle premium)
+
+- **Identité KDL TECH** : logo officiel, icônes d'application régénérées, palette
+  navy/cyan et typographies Space Grotesk / Inter alignées sur `kdl-tech.fr`.
+- **Interface repensée** : jeu d'icônes **SVG** cohérent (plus aucun emoji), menu
+  d'outils regroupé, barre d'adresse mise en avant, indicateur de sécurité HTTPS.
+- **Onglets** : favicon réel, indicateur de chargement, fermeture claire.
+- **Page d'accueil** : monogramme officiel, grande recherche centrale, raccourcis
+  fonctionnels, fond technique 100 % CSS (aucune ressource distante).
+- **Raccourcis** : `Ctrl+L/T/W/D/J`, `Ctrl+Shift+T` (rouvrir), zoom `Ctrl +/-/0`,
+  `Alt+←/→`, DevTools `F12`.
+- **Accessibilité** : focus clavier visible, `prefers-reduced-motion` respecté.
+- **Préparation IA** (désactivée) : contrat fournisseur abstrait + `docs/FUTURE_AI_ARCHITECTURE.md`.
+  Aucune IA, clé, ni appel réseau ajouté.
+
 ## Fonctions V1
 
 - **Navigation fluide** : barre d'adresse/recherche, précédent / suivant / recharger / accueil,

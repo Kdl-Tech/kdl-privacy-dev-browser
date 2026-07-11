@@ -45,6 +45,7 @@ function esc(s) {
 let tabs = [];
 let activeId = null;
 let seq = 0;
+const closedStack = [];   // pile des onglets fermés (Ctrl+Shift+T)
 
 const activeTab = () => tabs.find((t) => t.id === activeId);
 const cur = () => activeTab() && activeTab().wv;
@@ -71,7 +72,19 @@ function createTab(url) {
 
 function wireTab(tab) {
   const wv = tab.wv;
-  wv.addEventListener('did-start-loading', () => { if (isActive(tab)) { lock.textContent = '…'; lock.className = 'lock'; } });
+  wv.addEventListener('did-start-loading', () => { tab.loading = true; tab.failed = false; if (isActive(tab)) setLock('loading'); renderTabs(); });
+  wv.addEventListener('did-stop-loading', () => {
+    tab.loading = false;
+    if (isActive(tab)) { let u = tab.url; try { u = wv.getURL() || tab.url; } catch { /* */ } updateBar(u); }
+    renderTabs();
+  });
+  wv.addEventListener('page-favicon-updated', (e) => {
+    if (e.favicons && e.favicons[0]) { tab.favicon = e.favicons[0]; renderTabs(); }
+  });
+  wv.addEventListener('did-fail-load', (e) => {
+    // -3 = ERR_ABORTED (navigation volontairement interrompue) : pas une erreur affichable.
+    if (e.errorCode && e.errorCode !== -3 && e.isMainFrame !== false) { tab.failed = true; renderTabs(); }
+  });
   wv.addEventListener('page-title-updated', (e) => {
     tab.title = e.title || tab.title;
     if (isActive(tab)) document.title = 'KDL · ' + tab.title;
@@ -106,25 +119,37 @@ function closeTab(id) {
   const i = tabs.findIndex((t) => t.id === id);
   if (i < 0) return;
   const [t] = tabs.splice(i, 1);
+  let closing = t.url; try { closing = t.wv.getURL() || t.url; } catch { /* */ }
+  if (closing && !isHome(closing)) closedStack.push(closing);
   t.wv.remove();
   if (tabs.length === 0) { createTab(HOME); return; }   // garder un onglet minimum
   if (activeId === id) activate(tabs[Math.max(0, i - 1)].id);
   else renderTabs();
 }
 
+const CLOSE_SVG = '<svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>';
 function renderTabs() {
   tabsEl.innerHTML = '';
   tabs.forEach((t) => {
     const el = document.createElement('div');
-    el.className = 'tab' + (t.id === activeId ? ' active' : '');
-    el.title = t.title;
+    el.className = 'tab' + (t.id === activeId ? ' active' : '') + (t.loading ? ' loading' : '');
+    el.title = t.failed ? 'Échec de chargement — ' + t.title : t.title;
+
+    const spin = document.createElement('span'); spin.className = 'tab-spin';
+    const fav = document.createElement('img'); fav.className = 'tab-fav';
+    if (t.favicon && !isHome(t.url)) { fav.src = t.favicon; fav.onerror = () => fav.classList.add('blank'); }
+    else fav.classList.add('blank');
+
     const label = document.createElement('span');
     label.className = 'tab-label';
     label.textContent = (t.title && t.title !== 'Nouvel onglet') ? t.title : (isHome(t.url) ? 'Accueil' : 'Onglet');
+
     const x = document.createElement('button');
-    x.className = 'tab-close'; x.textContent = '✕'; x.title = 'Fermer (Ctrl+W)';
-    el.appendChild(label); el.appendChild(x);
-    el.onclick = (e) => { if (e.target !== x) activate(t.id); };
+    x.className = 'tab-close'; x.innerHTML = CLOSE_SVG; x.title = 'Fermer (Ctrl+W)';
+    x.setAttribute('aria-label', 'Fermer l’onglet');
+
+    el.appendChild(spin); el.appendChild(fav); el.appendChild(label); el.appendChild(x);
+    el.onclick = (e) => { if (e.target !== x && !x.contains(e.target)) activate(t.id); };
     x.onclick = (e) => { e.stopPropagation(); closeTab(t.id); };
     tabsEl.appendChild(el);
   });
@@ -166,12 +191,15 @@ document.getElementById('forward').onclick = () => cur() && cur().canGoForward()
 document.getElementById('reload').onclick = () => cur() && cur().reload();
 document.getElementById('home').onclick = () => cur() && cur().loadURL(homeURL()).catch(() => { cur().src = HOME; });
 
+// État de l'indicateur de sécurité (icône SVG via CSS [data-state], jamais d'emoji).
+function setLock(state) { lock.dataset.state = state; }
+
 function updateBar(url) {
-  if (isHome(url)) { urlbar.value = ''; lock.textContent = '·'; lock.className = 'lock'; updateStar(url); return; }
+  if (isHome(url)) { urlbar.value = ''; setLock('neutral'); updateStar(url); return; }
   urlbar.value = url;
-  if (url.startsWith('https://')) { lock.textContent = '🔒'; lock.className = 'lock secure'; }
-  else if (url.startsWith('http://')) { lock.textContent = '⚠'; lock.className = 'lock insecure'; }
-  else { lock.textContent = '·'; lock.className = 'lock'; }
+  if (url.startsWith('https://')) setLock('secure');
+  else if (url.startsWith('http://')) setLock('insecure');
+  else setLock('neutral');
   updateStar(url);
 }
 
@@ -183,8 +211,8 @@ function getFavs() { return JSON.parse(localStorage.getItem('kdl-favorites') || 
 function saveFavs(f) { localStorage.setItem('kdl-favorites', JSON.stringify(f)); }
 function updateStar(url) {
   const fav = !isHome(url) && getFavs().some((f) => f.url === url);
-  btnFav.textContent = fav ? '★' : '☆';
-  btnFav.classList.toggle('btn-accent', fav);
+  btnFav.classList.toggle('is-fav', fav);
+  btnFav.title = fav ? 'Retirer des favoris (Ctrl+D)' : 'Ajouter aux favoris (Ctrl+D)';
 }
 function toggleFav() {
   const url = cur() ? cur().getURL() : '';
@@ -429,15 +457,16 @@ document.getElementById('btn-settings').onclick = () => {
 
 // --- À propos / version ---
 document.getElementById('btn-about').onclick = async () => {
-  let info = { name: 'KDL Privacy Dev Browser', version: '1.1.0' };
+  let info = { name: 'KDL Privacy Dev Browser', version: '1.2.0' };
   try { info = await window.kdl.about(); } catch { /* */ }
   showPanel('À propos', `
     <div class="row"><span class="k">Nom</span><span class="v">${esc(info.name)}</span></div>
     <div class="row"><span class="k">Version</span><span class="v">${esc(info.version)}</span></div>
     <div class="row"><span class="k">Licence</span><span class="v">MIT</span></div>
+    <div class="row"><span class="k">Identité</span><span class="v">KDL TECH</span></div>
     <button id="about-gh" class="btn-full btn-accent">Voir sur GitHub</button>
     <small class="muted">Logiciel libre et gratuit. Non affilié à DuckDuckGo, au Tor Project ni à Ahmia.</small>
-    <small class="muted">VPN et assistant IA sont prévus pour la V2 — non inclus dans cette version.</small>
+    <small class="muted">Assistant IA gratuit : architecture préparée, non activée dans cette version.</small>
   `);
   document.getElementById('about-gh').onclick = () => window.kdl.openExternal(GITHUB);
 };
@@ -459,18 +488,58 @@ window.kdl.onDownload((info) => {
   else toast('Téléchargement échoué : ' + (info.name || '') + ' (' + info.state + ')', 4000);
 });
 
+// --- Zoom de la page active (Ctrl +/-/0) ---
+function setZoom(delta, reset) {
+  const wv = cur(); if (!wv) return;
+  try {
+    let z = reset ? 1 : Math.min(3, Math.max(0.3, (wv.getZoomFactor ? wv.getZoomFactor() : 1) + delta));
+    wv.setZoomFactor(z);
+    toast(reset ? 'Zoom réinitialisé (100 %)' : 'Zoom ' + Math.round(z * 100) + ' %', 1200);
+  } catch { /* */ }
+}
+
+// --- Panneau Téléchargements (dossier local dédié) ---
+function openDownloadsPanel() {
+  showPanel('Téléchargements', `
+    <div class="empty">Les fichiers sont enregistrés dans<br><b class="muted">Bureau/kdl-telechargements</b><br>
+      Aucune exécution ni ouverture automatique.</div>
+    <small class="muted">Un fichier téléchargé déclenche une notification en bas de l'écran.
+      Stockage local uniquement — aucun cloud.</small>
+  `);
+}
+
 // --- Raccourcis clavier ---
 document.addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
-  if (e.ctrlKey && k === 'l') { e.preventDefault(); urlbar.focus(); urlbar.select(); }
+  if (e.key === 'Escape') { closeMenu(); if (!panel.classList.contains('hidden')) panel.classList.add('hidden'); return; }
+  if (e.ctrlKey && e.shiftKey && k === 't') { e.preventDefault(); const u = closedStack.pop(); if (u) createTab(u); else toast('Aucun onglet à rouvrir.'); }
+  else if (e.ctrlKey && k === 'l') { e.preventDefault(); urlbar.focus(); urlbar.select(); }
   else if (e.ctrlKey && k === 'r') { e.preventDefault(); cur() && cur().reload(); }
   else if (e.ctrlKey && k === 't') { e.preventDefault(); createTab(HOME); }
   else if (e.ctrlKey && k === 'w') { e.preventDefault(); if (activeId != null) closeTab(activeId); }
   else if (e.ctrlKey && k === 'd') { e.preventDefault(); toggleFav(); }
+  else if (e.ctrlKey && k === 'j') { e.preventDefault(); openDownloadsPanel(); }
+  else if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); cur() && cur().canGoBack() && cur().goBack(); }
+  else if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); cur() && cur().canGoForward() && cur().goForward(); }
+  else if (e.ctrlKey && (k === '+' || k === '=')) { e.preventDefault(); setZoom(0.1, false); }
+  else if (e.ctrlKey && k === '-') { e.preventDefault(); setZoom(-0.1, false); }
+  else if (e.ctrlKey && k === '0') { e.preventDefault(); setZoom(0, true); }
   else if (e.ctrlKey && e.shiftKey && k === 'i') { e.preventDefault(); cur() && cur().openDevTools(); }
   else if (e.key === 'F12') { e.preventDefault(); cur() && cur().openDevTools(); }
-  else if (e.ctrlKey && e.shiftKey && k === 'm') { e.preventDefault(); respBar.classList.toggle('hidden'); viewport.classList.toggle('with-bar'); }
+  else if (e.ctrlKey && e.shiftKey && k === 'm') { e.preventDefault(); respBar.classList.toggle('hidden'); }
 });
+
+// --- Menu déroulant (outils secondaires) ---
+const menuEl = document.getElementById('menu');
+const menuBtn = document.getElementById('btn-menu');
+function closeMenu() { menuEl.classList.add('hidden'); menuBtn.setAttribute('aria-expanded', 'false'); }
+function toggleMenu() {
+  const open = menuEl.classList.toggle('hidden');
+  menuBtn.setAttribute('aria-expanded', String(!open));
+}
+menuBtn.onclick = (e) => { e.stopPropagation(); toggleMenu(); };
+menuEl.querySelectorAll('.menu-item').forEach((it) => it.addEventListener('click', () => closeMenu()));
+document.addEventListener('click', (e) => { if (!menuEl.classList.contains('hidden') && !menuEl.contains(e.target) && e.target !== menuBtn) closeMenu(); });
 
 // --- Démarrage : un onglet d'accueil ---
 createTab(HOME);

@@ -2,119 +2,173 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>KDL Privacy Dev Browser</title>
   <style>
     /* Palette officielle KDL TECH — DESIGN_SYSTEM.md (repo kdl-tech-v2) */
     :root{
-      --bg:#020817;--bg2:#07111F;--bg3:#0F172A;--fg:#F8FAFC;--muted:#94A3B8;
-      --accent:#06B6D4;--accent2:#22D3EE;--border:rgba(34,211,238,.16);
+      --bg:#020817; --bg2:#07111F; --panel:#0F172A; --elev:#16233A;
+      --fg:#F8FAFC; --fg2:#CBD5E1; --muted:#94A3B8;
+      --cyan:#06B6D4; --turq:#22D3EE; --blue:#2563EB;
+      --line:rgba(34,211,238,.14); --line2:rgba(34,211,238,.28);
+      --ok:#22C55E; --radius:16px;
+      --ease:cubic-bezier(.2,.7,.2,1);
     }
     *{box-sizing:border-box;}
-    html,body{height:100%;}
+    html,body{height:100%;margin:0;}
     body{
-      margin:0;
-      background:
-        radial-gradient(900px 480px at 50% -160px,rgba(6,182,212,.16),transparent 70%),
-        radial-gradient(1200px 600px at 50% 120%,#0A1626,var(--bg));
-      color:var(--fg);font:14px/1.55 "Inter",system-ui,"Segoe UI",Roboto,sans-serif;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      padding:40px 24px;text-align:center;
+      background:var(--bg); color:var(--fg2);
+      font:14px/1.55 "Inter",system-ui,"Segoe UI",Roboto,sans-serif;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:40px 24px; text-align:center; position:relative; overflow:hidden;
     }
+    /* ── Signature : fond technique (grille + traces circuit + horizon cyan), 100% CSS ── */
+    .bg{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;}
+    .bg-grid{
+      position:absolute; inset:-2px;
+      background-image:
+        linear-gradient(var(--line) 1px,transparent 1px),
+        linear-gradient(90deg,var(--line) 1px,transparent 1px);
+      background-size:38px 38px;
+      mask-image:radial-gradient(120% 90% at 50% 8%,#000 0%,transparent 62%);
+      -webkit-mask-image:radial-gradient(120% 90% at 50% 8%,#000 0%,transparent 62%);
+      opacity:.5;
+    }
+    .bg-glow{
+      position:absolute; left:50%; top:-32%; width:1100px; height:1100px; transform:translateX(-50%);
+      background:radial-gradient(closest-side,rgba(6,182,212,.20),rgba(6,182,212,.05) 55%,transparent 72%);
+    }
+    .bg-horizon{
+      position:absolute; left:0; right:0; bottom:0; height:46%;
+      background:linear-gradient(180deg,transparent,rgba(3,10,24,.7) 55%,var(--bg));
+    }
+    .bg svg{position:absolute; inset:0; width:100%; height:100%; opacity:.5;}
+    .trace{fill:none; stroke:var(--line2); stroke-width:1.2;}
+    .node{fill:var(--turq);}
 
-    /* ── Logo / wordmark central ── */
-    .hero{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:30px;}
-    .ring{
-      width:64px;height:64px;border-radius:50%;border:3px solid var(--accent);
-      display:flex;align-items:center;justify-content:center;overflow:hidden;
-      box-shadow:0 0 22px rgba(6,182,212,.28);margin-bottom:10px;background:var(--bg3);
-    }
-    .ring img{width:78%;height:78%;object-fit:contain;}
-    .wordmark{
-      font-family:"Space Grotesk","Inter",system-ui,sans-serif;
-      font-size:clamp(38px,8vw,66px);font-weight:700;letter-spacing:2px;line-height:1;
-      margin:0;text-shadow:0 2px 24px rgba(0,0,0,.4);
-    }
-    .wordmark .k{color:var(--fg);}
-    .wordmark .t{color:var(--accent);}
-    .tagline{color:var(--muted);font-size:clamp(13px,2.4vw,16px);letter-spacing:.6px;margin-top:4px;}
+    main{position:relative; z-index:1; width:100%; max-width:680px;
+      display:flex; flex-direction:column; align-items:center;}
 
-    /* ── Barre de recherche centrale (type navigateur) ── */
-    form{
-      width:100%;max-width:680px;display:flex;align-items:center;gap:8px;
-      background:var(--bg2);border:1px solid var(--border);border-radius:30px;
-      padding:7px 9px 7px 22px;box-shadow:0 10px 38px rgba(0,0,0,.38);
-      transition:border-color .12s ease,box-shadow .12s ease;
-    }
-    form:focus-within{
-      border-color:var(--accent);
-      box-shadow:0 0 0 3px rgba(6,182,212,.18),0 10px 38px rgba(0,0,0,.38);
-    }
-    .glass{color:var(--muted);font-size:18px;}
-    #q{flex:1;background:transparent;border:0;outline:none;color:var(--fg);font-size:17px;height:44px;}
+    /* ── Marque ── */
+    .brand{display:flex; flex-direction:column; align-items:center; gap:14px; margin-bottom:30px;
+      animation:rise .5s var(--ease) both;}
+    .brand img{width:88px; height:88px; object-fit:contain;
+      filter:drop-shadow(0 8px 26px rgba(6,182,212,.28));}
+    .title{font-family:"Space Grotesk","Inter",system-ui,sans-serif;
+      font-size:clamp(24px,4.6vw,34px); font-weight:600; letter-spacing:.4px;
+      color:var(--fg); margin:0; line-height:1.1;}
+    .title b{color:var(--turq); font-weight:700;}
+    .tagline{color:var(--muted); font-size:13.5px; letter-spacing:.3px; margin:0;}
+
+    /* ── Barre de recherche (point focal) ── */
+    form{width:100%; display:flex; align-items:center; gap:6px;
+      background:linear-gradient(180deg,var(--panel),var(--bg2));
+      border:1px solid var(--line); border-radius:30px;
+      padding:8px 8px 8px 18px; box-shadow:0 18px 50px rgba(2,8,23,.6);
+      transition:border-color .16s var(--ease),box-shadow .16s var(--ease);
+      animation:rise .5s var(--ease) .06s both;}
+    form:focus-within{border-color:var(--cyan);
+      box-shadow:0 0 0 4px rgba(6,182,212,.16),0 18px 50px rgba(2,8,23,.6);}
+    form .ico{color:var(--muted); display:flex; flex-shrink:0;}
+    #q{flex:1; background:transparent; border:0; outline:none; color:var(--fg);
+      font-size:16px; height:46px; min-width:0;}
     #q::placeholder{color:var(--muted);}
-    form button{
-      min-width:50px;height:44px;border:0;border-radius:24px;cursor:pointer;
-      background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04222a;
-      font-size:18px;display:flex;align-items:center;justify-content:center;
-      transition:filter .12s ease;
-    }
-    form button:hover{filter:brightness(1.1);}
+    form button{width:52px; height:46px; flex-shrink:0; border:0; border-radius:24px; cursor:pointer;
+      background:linear-gradient(135deg,var(--cyan),var(--turq)); color:#022; display:flex;
+      align-items:center; justify-content:center; transition:filter .14s var(--ease),transform .1s var(--ease);}
+    form button:hover{filter:brightness(1.08);}
+    form button:active{transform:scale(.96);}
 
-    /* ── Chips / raccourcis ── */
-    .chips{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;justify-content:center;max-width:680px;}
-    .chip{
-      display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--fg);
-      background:var(--bg2);border:1px solid var(--border);border-radius:14px;
-      padding:10px 16px;font-size:13px;cursor:pointer;
-      transition:border-color .12s ease,background .12s ease,transform .08s ease;
-    }
-    .chip:hover{border-color:var(--accent);background:var(--bg3);}
+    /* ── Raccourcis fonctionnels ── */
+    .chips{display:flex; gap:10px; margin-top:22px; flex-wrap:wrap; justify-content:center;
+      animation:rise .5s var(--ease) .12s both;}
+    .chip{display:inline-flex; align-items:center; gap:8px; text-decoration:none; color:var(--fg2);
+      background:var(--bg2); border:1px solid var(--line); border-radius:12px;
+      padding:9px 14px; font-size:13px; cursor:pointer;
+      transition:border-color .14s var(--ease),background .14s var(--ease),
+                 color .14s var(--ease),transform .1s var(--ease);}
+    .chip:hover{border-color:var(--line2); background:var(--elev); color:var(--fg);}
     .chip:active{transform:translateY(1px);}
-    .chip .i{font-size:16px;line-height:1;}
+    .chip svg{width:16px; height:16px; flex-shrink:0; color:var(--turq);}
+    .chip:focus-visible{outline:2px solid var(--cyan); outline-offset:2px;}
 
-    footer{
-      margin-top:38px;color:var(--muted);font-size:11.5px;line-height:1.65;
-      max-width:640px;
-    }
-    footer b{color:var(--accent);font-weight:600;}
+    /* ── Indicateur confidentialité + pied ── */
+    .privacy{display:inline-flex; align-items:center; gap:8px; margin-top:26px;
+      color:var(--muted); font-size:12px; letter-spacing:.2px;}
+    .privacy .dot{width:7px; height:7px; border-radius:50%; background:var(--ok);
+      box-shadow:0 0 8px rgba(34,197,94,.6);}
+    footer{margin-top:14px; color:var(--muted); font-size:11px; line-height:1.7; max-width:560px;}
+    footer b{color:var(--cyan); font-weight:600;}
 
+    @keyframes rise{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
     @media (max-width:560px){
-      form{padding:6px 8px 6px 18px;}
-      #q{font-size:16px;height:42px;}
-      .chips{gap:8px;}
-      .chip{padding:9px 13px;font-size:12.5px;}
+      .chips{gap:8px;} .chip{padding:8px 11px; font-size:12.5px;}
+      #q{font-size:15px; height:44px;}
+    }
+    @media (prefers-reduced-motion:reduce){
+      *{animation:none !important; transition:none !important;}
     }
   </style>
 </head>
 <body>
-  <div class="hero">
-    <span class="ring"><img src="../assets/kdl-logo.png" alt="KDL TECH" /></span>
-    <h1 class="wordmark"><span class="k">KDL</span><span class="t">·TECH</span></h1>
-    <div class="tagline">Privacy Dev Browser</div>
+  <div class="bg" aria-hidden="true">
+    <div class="bg-glow"></div>
+    <svg viewBox="0 0 1200 300" preserveAspectRatio="xMidYMin slice">
+      <path class="trace" d="M0 60 H360 l30 30 H720"/>
+      <path class="trace" d="M1200 40 H900 l-26 26 H600"/>
+      <path class="trace" d="M120 300 V180 l40 -40 H420"/>
+      <path class="trace" d="M1080 300 V150 l-40 -40 H780"/>
+      <circle class="node" cx="720" cy="90" r="3.4"/>
+      <circle class="node" cx="600" cy="66" r="3.4"/>
+      <circle class="node" cx="420" cy="140" r="3.4"/>
+      <circle class="node" cx="780" cy="110" r="3.4"/>
+    </svg>
+    <div class="bg-grid"></div>
+    <div class="bg-horizon"></div>
   </div>
 
-  <form id="search" autocomplete="off">
-    <span class="glass" aria-hidden="true">🔍</span>
-    <input id="q" type="text" placeholder="Rechercher avec DuckDuckGo ou entrer une URL"
-           spellcheck="false" autofocus />
-    <button type="submit" title="Rechercher / Ouvrir" aria-label="Rechercher">→</button>
-  </form>
+  <main>
+    <div class="brand">
+      <img src="../assets/kdl-logo-official.png" alt="KDL TECH" />
+      <h1 class="title">KDL <b>Privacy</b> Dev Browser</h1>
+      <p class="tagline">Navigation privée · outils développeur · zéro tracking</p>
+    </div>
 
-  <div class="chips">
-    <a class="chip" href="kdlgo://q/https%3A%2F%2Fduckduckgo.com"><span class="i">🦆</span>DuckDuckGo</a>
-    <a class="chip" href="kdlgo://action/favs"><span class="i">★</span>Favoris</a>
-    <a class="chip" href="kdlgo://action/devtools"><span class="i">{ }</span>DevTools</a>
-    <a class="chip" href="kdlgo://action/onion"><span class="i">🧅</span>Onion Search</a>
-    <a class="chip" href="kdlgo://action/clean"><span class="i">🧹</span>Effacer session</a>
-  </div>
+    <form id="search" autocomplete="off" role="search" aria-label="Recherche ou adresse">
+      <span class="ico" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+      </span>
+      <input id="q" type="text" spellcheck="false" autofocus aria-label="Rechercher ou saisir une URL"
+             placeholder="Rechercher avec DuckDuckGo ou saisir une adresse" />
+      <button type="submit" title="Ouvrir" aria-label="Ouvrir">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m13 6 6 6-6 6"/></svg>
+      </button>
+    </form>
 
-  <footer>
-    Navigation privée légère · Outils développeur · Onion Search via Tor Browser (usage légal).<br>
-    Logiciel libre (<b>MIT</b>) · Non affilié à DuckDuckGo, au Tor Project ni à Ahmia. VPN/IA prévus en V2.
-  </footer>
+    <nav class="chips" aria-label="Raccourcis">
+      <a class="chip" href="kdlgo://q/https%3A%2F%2Fduckduckgo.com" title="Ouvrir DuckDuckGo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>DuckDuckGo</a>
+      <a class="chip" href="kdlgo://action/favs" title="Ouvrir les favoris">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></svg>Favoris</a>
+      <a class="chip" href="kdlgo://action/devtools" title="Ouvrir les outils de développement">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 8-4 4 4 4"/><path d="m15 8 4 4-4 4"/></svg>DevTools</a>
+      <a class="chip" href="kdlgo://action/onion" title="Recherche Onion via Tor (usage légal)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 8 4-8 4-8-4 8-4Z"/><path d="m4 12 8 4 8-4"/><path d="m4 17 8 4 8-4"/></svg>Onion Search</a>
+      <a class="chip" href="kdlgo://action/clean" title="Effacer les données de navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/></svg>Effacer session</a>
+    </nav>
+
+    <span class="privacy"><span class="dot"></span>Session privée locale — aucune télémétrie, aucun compte requis</span>
+    <footer>
+      Logiciel libre (<b>MIT</b>) · Non affilié à DuckDuckGo, au Tor Project ni à Ahmia.<br>
+      Assistant IA gratuit prévu dans une prochaine version.
+    </footer>
+  </main>
 
   <script>
-    // La recherche centrale et les chips d'action délèguent au routage sécurisé du parent
+    // La recherche et les raccourcis délèguent au routage sécurisé du parent
     // via un schéma sentinelle (kdlgo://) intercepté par le renderer (will-navigate).
     // Aucune résolution d'URL ni action sensible n'est faite ici.
     document.getElementById('search').addEventListener('submit', function (e) {
