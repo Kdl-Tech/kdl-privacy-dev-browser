@@ -16,8 +16,32 @@ const respBar = document.getElementById('responsive-bar');
 const viewport = document.getElementById('viewport');
 const tabsEl = document.getElementById('tabs');
 
-function homeURL() { return location.href.replace(/index\.html(\?.*)?(#.*)?$/, HOME); }
+function curTheme() { return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
+function homeURL() {
+  return location.href.replace(/index\.html(\?.*)?(#.*)?$/, HOME) + '?theme=' + curTheme();
+}
 function isHome(url) { return !url || url.includes(HOME); }
+
+// ── Thème clair/sombre (KDL Design System) ────────────────────────────────
+function applyTheme(theme, persist) {
+  theme = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  if (persist) { try { localStorage.setItem('kdl-theme', theme); } catch (e) { /* */ } }
+  const btn = document.getElementById('btn-theme');
+  if (btn) {
+    btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+    btn.setAttribute('title', theme === 'dark' ? 'Activer le thème clair' : 'Activer le thème sombre');
+    btn.setAttribute('aria-label', theme === 'dark' ? 'Activer le thème clair' : 'Activer le thème sombre');
+  }
+  // Recharger les onglets d'accueil pour propager le thème au <webview> home.
+  tabs.forEach((t) => {
+    if (isHome(t.url)) {
+      t.url = homeURL();
+      try { t.wv.loadURL(t.url).catch(() => { t.wv.src = t.url; }); } catch (e) { t.wv.src = t.url; }
+    }
+  });
+}
+function toggleTheme() { applyTheme(curTheme() === 'dark' ? 'light' : 'dark', true); }
 
 let toastTimer = null;
 function toast(msg, ms = 2600) {
@@ -163,6 +187,8 @@ function renderTabs() {
   });
 }
 document.getElementById('newtab').onclick = () => createTab(HOME);
+const themeBtn = document.getElementById('btn-theme');
+if (themeBtn) { themeBtn.onclick = toggleTheme; applyTheme(curTheme(), false); }
 
 // --- Résolution requête : URL directe ou recherche DuckDuckGo ---
 function resolveQuery(raw) {
@@ -642,6 +668,7 @@ document.addEventListener('keydown', (e) => {
   else if (e.ctrlKey && e.shiftKey && k === 'i') { e.preventDefault(); cur() && cur().openDevTools(); }
   else if (e.key === 'F12') { e.preventDefault(); cur() && cur().openDevTools(); }
   else if (e.ctrlKey && e.shiftKey && k === 'm') { e.preventDefault(); respBar.classList.toggle('hidden'); }
+  else if (e.ctrlKey && e.shiftKey && k === 'l') { e.preventDefault(); toggleTheme(); }
 });
 
 // --- Menu déroulant (outils secondaires) ---

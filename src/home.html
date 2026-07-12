@@ -1,137 +1,132 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>KDL Privacy Dev Browser</title>
+  <script>
+    /* Thème transmis par le chrome via ?theme=light|dark (KDL Design System). */
+    (function () {
+      var m = /[?&]theme=(dark|light)/.exec(location.search);
+      document.documentElement.setAttribute('data-theme', m ? m[1] : 'light');
+    })();
+  </script>
   <style>
-    /* Palette officielle KDL TECH — DESIGN_SYSTEM.md (repo kdl-tech-v2) */
-    :root{
-      --bg:#020817; --bg2:#07111F; --panel:#0F172A; --elev:#16233A;
-      --fg:#F8FAFC; --fg2:#CBD5E1; --muted:#94A3B8;
-      --cyan:#06B6D4; --turq:#22D3EE; --blue:#2563EB;
-      --line:rgba(34,211,238,.14); --line2:rgba(34,211,238,.28);
-      --ok:#22C55E; --radius:16px;
-      --ease:cubic-bezier(.2,.7,.2,1);
+    /* KDL Design System v0.1.0 — tokens (copie locale, sans dépendance réseau) */
+    :root, [data-theme="light"] {
+      color-scheme: light;
+      --bg:#F3EFE6; --bg-alt:#EBE5D8; --surface:#FBF8F1; --raised:#FFFFFF;
+      --text:#23282D; --text-2:#55606A; --muted:#6E7780;
+      --border:#D9D0BF; --border-soft:#E7E0D2;
+      --accent:#0B3D68; --accent-hover:#0D4F7A; --accent-soft:rgba(52,152,219,.12);
+      --focus:#2F80C2; --on-accent:#FFFFFF; --ok:#2F9E6A;
+      --grid:rgba(35,40,45,.05); --wash:rgba(47,128,194,.07);
+      --shadow:0 14px 38px rgba(35,40,45,.12);
     }
-    *{box-sizing:border-box;}
-    html,body{height:100%;margin:0;}
-    body{
-      background:var(--bg); color:var(--fg2);
-      font:14px/1.55 "Inter",system-ui,"Segoe UI",Roboto,sans-serif;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      padding:40px 24px; text-align:center; position:relative; overflow:hidden;
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg:#171B20; --bg-alt:#1D2228; --surface:#232830; --raised:#2A313A;
+      --text:#ECE7DB; --text-2:#B3AFA6; --muted:#8A8F95;
+      --border:#363C44; --border-soft:#2B313A;
+      --accent:#5BA3E6; --accent-hover:#7CB7EE; --accent-soft:rgba(91,163,230,.16);
+      --focus:#5DADE2; --on-accent:#08243A; --ok:#4CC38A;
+      --grid:rgba(255,255,255,.04); --wash:rgba(91,163,230,.10);
+      --shadow:0 16px 40px rgba(0,0,0,.5);
     }
-    /* ── Signature : fond technique (grille + traces circuit + horizon cyan), 100% CSS ── */
-    .bg{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;}
-    .bg-grid{
-      position:absolute; inset:-2px;
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: var(--bg); color: var(--text-2);
+      font: 14px/1.55 "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 40px 24px; text-align: center; position: relative; overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Signature sobre : grille très discrète + voile doux en haut. Aucun néon. */
+    .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .bg-grid {
+      position: absolute; inset: -2px;
       background-image:
-        linear-gradient(var(--line) 1px,transparent 1px),
-        linear-gradient(90deg,var(--line) 1px,transparent 1px);
-      background-size:38px 38px;
-      mask-image:radial-gradient(120% 90% at 50% 8%,#000 0%,transparent 62%);
-      -webkit-mask-image:radial-gradient(120% 90% at 50% 8%,#000 0%,transparent 62%);
-      opacity:.5;
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(120% 80% at 50% 0%, #000 0%, transparent 60%);
+      -webkit-mask-image: radial-gradient(120% 80% at 50% 0%, #000 0%, transparent 60%);
     }
-    .bg-glow{
-      position:absolute; left:50%; top:-32%; width:1100px; height:1100px; transform:translateX(-50%);
-      background:radial-gradient(closest-side,rgba(6,182,212,.20),rgba(6,182,212,.05) 55%,transparent 72%);
+    .bg-wash {
+      position: absolute; left: 50%; top: -30%; width: 900px; height: 900px; transform: translateX(-50%);
+      background: radial-gradient(closest-side, var(--wash), transparent 70%);
     }
-    .bg-horizon{
-      position:absolute; left:0; right:0; bottom:0; height:46%;
-      background:linear-gradient(180deg,transparent,rgba(3,10,24,.7) 55%,var(--bg));
+
+    main { position: relative; z-index: 1; width: 100%; max-width: 620px;
+      display: flex; flex-direction: column; align-items: center; }
+
+    .brand { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 34px;
+      animation: rise .5s cubic-bezier(.2,.7,.2,1) both; }
+    .brand img { width: 76px; height: 76px; object-fit: contain;
+      filter: drop-shadow(0 6px 18px rgba(35,40,45,.18)); }
+    .title { font-size: clamp(23px,4.4vw,31px); font-weight: 700; letter-spacing: -.02em;
+      color: var(--text); margin: 0; line-height: 1.12; }
+    .title b { color: var(--accent); font-weight: 700; }
+    .tagline { color: var(--muted); font-size: 13px; letter-spacing: .2px; margin: 0;
+      font-family: "JetBrains Mono", ui-monospace, monospace; text-transform: uppercase; }
+
+    /* Barre de recherche = point focal */
+    form { width: 100%; display: flex; align-items: center; gap: 6px;
+      background: var(--raised); border: 1px solid var(--border);
+      border-radius: 30px; padding: 7px 7px 7px 18px; box-shadow: var(--shadow);
+      transition: border-color .16s ease, box-shadow .16s ease;
+      animation: rise .5s cubic-bezier(.2,.7,.2,1) .06s both; }
+    form:focus-within { border-color: var(--focus); box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow); }
+    form .ico { color: var(--muted); display: flex; flex-shrink: 0; }
+    #q { flex: 1; background: transparent; border: 0; outline: none; color: var(--text);
+      font-size: 16px; height: 46px; min-width: 0; }
+    #q::placeholder { color: var(--muted); }
+    form button { width: 52px; height: 46px; flex-shrink: 0; border: 0; border-radius: 24px; cursor: pointer;
+      background: var(--accent); color: var(--on-accent); display: flex;
+      align-items: center; justify-content: center; transition: background .14s ease, transform .1s ease; }
+    form button:hover { background: var(--accent-hover); }
+    form button:active { transform: scale(.96); }
+
+    /* Raccourcis fonctionnels */
+    .chips { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; justify-content: center;
+      animation: rise .5s cubic-bezier(.2,.7,.2,1) .12s both; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-2);
+      background: var(--surface); border: 1px solid var(--border-soft); border-radius: 12px;
+      padding: 9px 14px; font-size: 13px; cursor: pointer;
+      transition: border-color .14s ease, background .14s ease, color .14s ease, transform .1s ease; }
+    .chip:hover { border-color: var(--accent); background: var(--bg-alt); color: var(--text); }
+    .chip:active { transform: translateY(1px); }
+    .chip svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--accent); }
+    .chip:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+    .privacy { display: inline-flex; align-items: center; gap: 8px; margin-top: 28px;
+      color: var(--muted); font-size: 12px; letter-spacing: .2px; }
+    .privacy .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+    footer { margin-top: 14px; color: var(--muted); font-size: 11px; line-height: 1.7; max-width: 540px; }
+    footer b { color: var(--accent); font-weight: 600; }
+
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    @media (max-width: 560px) {
+      .chips { gap: 8px; } .chip { padding: 8px 11px; font-size: 12.5px; }
+      #q { font-size: 15px; height: 44px; }
     }
-    .bg svg{position:absolute; inset:0; width:100%; height:100%; opacity:.5;}
-    .trace{fill:none; stroke:var(--line2); stroke-width:1.2;}
-    .node{fill:var(--turq);}
-
-    main{position:relative; z-index:1; width:100%; max-width:680px;
-      display:flex; flex-direction:column; align-items:center;}
-
-    /* ── Marque ── */
-    .brand{display:flex; flex-direction:column; align-items:center; gap:14px; margin-bottom:30px;
-      animation:rise .5s var(--ease) both;}
-    .brand img{width:88px; height:88px; object-fit:contain;
-      filter:drop-shadow(0 8px 26px rgba(6,182,212,.28));}
-    .title{font-family:"Space Grotesk","Inter",system-ui,sans-serif;
-      font-size:clamp(24px,4.6vw,34px); font-weight:600; letter-spacing:.4px;
-      color:var(--fg); margin:0; line-height:1.1;}
-    .title b{color:var(--turq); font-weight:700;}
-    .tagline{color:var(--muted); font-size:13.5px; letter-spacing:.3px; margin:0;}
-
-    /* ── Barre de recherche (point focal) ── */
-    form{width:100%; display:flex; align-items:center; gap:6px;
-      background:linear-gradient(180deg,var(--panel),var(--bg2));
-      border:1px solid var(--line); border-radius:30px;
-      padding:8px 8px 8px 18px; box-shadow:0 18px 50px rgba(2,8,23,.6);
-      transition:border-color .16s var(--ease),box-shadow .16s var(--ease);
-      animation:rise .5s var(--ease) .06s both;}
-    form:focus-within{border-color:var(--cyan);
-      box-shadow:0 0 0 4px rgba(6,182,212,.16),0 18px 50px rgba(2,8,23,.6);}
-    form .ico{color:var(--muted); display:flex; flex-shrink:0;}
-    #q{flex:1; background:transparent; border:0; outline:none; color:var(--fg);
-      font-size:16px; height:46px; min-width:0;}
-    #q::placeholder{color:var(--muted);}
-    form button{width:52px; height:46px; flex-shrink:0; border:0; border-radius:24px; cursor:pointer;
-      background:linear-gradient(135deg,var(--cyan),var(--turq)); color:#022; display:flex;
-      align-items:center; justify-content:center; transition:filter .14s var(--ease),transform .1s var(--ease);}
-    form button:hover{filter:brightness(1.08);}
-    form button:active{transform:scale(.96);}
-
-    /* ── Raccourcis fonctionnels ── */
-    .chips{display:flex; gap:10px; margin-top:22px; flex-wrap:wrap; justify-content:center;
-      animation:rise .5s var(--ease) .12s both;}
-    .chip{display:inline-flex; align-items:center; gap:8px; text-decoration:none; color:var(--fg2);
-      background:var(--bg2); border:1px solid var(--line); border-radius:12px;
-      padding:9px 14px; font-size:13px; cursor:pointer;
-      transition:border-color .14s var(--ease),background .14s var(--ease),
-                 color .14s var(--ease),transform .1s var(--ease);}
-    .chip:hover{border-color:var(--line2); background:var(--elev); color:var(--fg);}
-    .chip:active{transform:translateY(1px);}
-    .chip svg{width:16px; height:16px; flex-shrink:0; color:var(--turq);}
-    .chip:focus-visible{outline:2px solid var(--cyan); outline-offset:2px;}
-
-    /* ── Indicateur confidentialité + pied ── */
-    .privacy{display:inline-flex; align-items:center; gap:8px; margin-top:26px;
-      color:var(--muted); font-size:12px; letter-spacing:.2px;}
-    .privacy .dot{width:7px; height:7px; border-radius:50%; background:var(--ok);
-      box-shadow:0 0 8px rgba(34,197,94,.6);}
-    footer{margin-top:14px; color:var(--muted); font-size:11px; line-height:1.7; max-width:560px;}
-    footer b{color:var(--cyan); font-weight:600;}
-
-    @keyframes rise{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
-    @media (max-width:560px){
-      .chips{gap:8px;} .chip{padding:8px 11px; font-size:12.5px;}
-      #q{font-size:15px; height:44px;}
-    }
-    @media (prefers-reduced-motion:reduce){
-      *{animation:none !important; transition:none !important;}
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
     }
   </style>
 </head>
 <body>
   <div class="bg" aria-hidden="true">
-    <div class="bg-glow"></div>
-    <svg viewBox="0 0 1200 300" preserveAspectRatio="xMidYMin slice">
-      <path class="trace" d="M0 60 H360 l30 30 H720"/>
-      <path class="trace" d="M1200 40 H900 l-26 26 H600"/>
-      <path class="trace" d="M120 300 V180 l40 -40 H420"/>
-      <path class="trace" d="M1080 300 V150 l-40 -40 H780"/>
-      <circle class="node" cx="720" cy="90" r="3.4"/>
-      <circle class="node" cx="600" cy="66" r="3.4"/>
-      <circle class="node" cx="420" cy="140" r="3.4"/>
-      <circle class="node" cx="780" cy="110" r="3.4"/>
-    </svg>
+    <div class="bg-wash"></div>
     <div class="bg-grid"></div>
-    <div class="bg-horizon"></div>
   </div>
 
   <main>
     <div class="brand">
       <img src="../assets/kdl-logo-official.png" alt="KDL TECH" />
       <h1 class="title">KDL <b>Privacy</b> Dev Browser</h1>
-      <p class="tagline">Navigation privée · outils développeur · zéro tracking</p>
+      <p class="tagline">Navigation privée · outils dev · zéro tracking</p>
     </div>
 
     <form id="search" autocomplete="off" role="search" aria-label="Recherche ou adresse">
@@ -170,7 +165,6 @@
   <script>
     // La recherche et les raccourcis délèguent au routage sécurisé du parent
     // via un schéma sentinelle (kdlgo://) intercepté par le renderer (will-navigate).
-    // Aucune résolution d'URL ni action sensible n'est faite ici.
     document.getElementById('search').addEventListener('submit', function (e) {
       e.preventDefault();
       var v = document.getElementById('q').value.trim();

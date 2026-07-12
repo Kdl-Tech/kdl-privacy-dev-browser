@@ -10,3 +10,6 @@ captures/
 ai-models/
 *.onnx
 *.gguf
+
+# Backups datés (rollback local, hors Git)
+.backups/

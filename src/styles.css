@@ -3,34 +3,61 @@
    Palette officielle KDL TECH (DESIGN_SYSTEM.md, repo kdl-tech-v2).
    Structure prête pour un futur thème clair : tout passe par les variables.
    ═══════════════════════════════════════════════════════════════════════ */
+/* ── KDL Design System v0.1.0 (intégré en copie) ─────────────────────────
+   Tokens clair (défaut) + sombre. Voir repo kdl-design-system/docs.
+   Le thème est piloté par [data-theme] sur <html> (kdl-theme, anti-flash). */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --kdl-bg: #F3EFE6; --kdl-bg-alt: #EBE5D8;
+  --kdl-surface: #FBF8F1; --kdl-surface-soft: #F4F0E7; --kdl-surface-raised: #FFFFFF;
+  --kdl-text: #23282D; --kdl-text-secondary: #55606A; --kdl-text-muted: #6E7780;
+  --kdl-text-on-accent: #FFFFFF;
+  --kdl-border: #D9D0BF; --kdl-border-soft: #E7E0D2;
+  --kdl-accent: #0B3D68; --kdl-accent-hover: #0D4F7A; --kdl-accent-soft: rgba(52,152,219,.12);
+  --kdl-focus: #2F80C2;
+  --kdl-success: #2F9E6A; --kdl-warning: #B7791F; --kdl-danger: #CF3D4E;
+  --kdl-shadow-sm: 0 2px 8px rgba(35,40,45,.06);
+  --kdl-shadow-md: 0 6px 20px rgba(35,40,45,.09);
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --kdl-bg: #171B20; --kdl-bg-alt: #1D2228;
+  --kdl-surface: #232830; --kdl-surface-soft: #1C2127; --kdl-surface-raised: #2A313A;
+  --kdl-text: #ECE7DB; --kdl-text-secondary: #B3AFA6; --kdl-text-muted: #8A8F95;
+  --kdl-text-on-accent: #08243A;
+  --kdl-border: #363C44; --kdl-border-soft: #2B313A;
+  --kdl-accent: #5BA3E6; --kdl-accent-hover: #7CB7EE; --kdl-accent-soft: rgba(91,163,230,.16);
+  --kdl-focus: #5DADE2;
+  --kdl-success: #4CC38A; --kdl-warning: #E0A03A; --kdl-danger: #F0687A;
+  --kdl-shadow-sm: 0 3px 10px rgba(0,0,0,.35);
+  --kdl-shadow-md: 0 8px 24px rgba(0,0,0,.42);
+}
+
+/* ── Alias legacy → tokens KDL : les styles existants restent inchangés ── */
 :root {
-  /* Surfaces (sombre) */
-  --bg:        #020817;
-  --bg2:       #07111F;
-  --panel:     #0F172A;
-  --elev:      #16233A;
-  --hover:     #1B2A44;
-  /* Texte */
-  --fg:        #CBD5E1;
-  --fg-strong: #F8FAFC;
-  --muted:     #94A3B8;
-  /* Marque */
-  --cyan:      #06B6D4;
-  --turq:      #22D3EE;
-  --blue:      #2563EB;
-  --cyan-soft: rgba(6, 182, 212, .14);
-  /* États */
-  --ok:        #22C55E;
-  --warn:      #F59E0B;
-  --err:       #EF4444;
-  /* Lignes / rayons / profondeur */
-  --line:      rgba(34, 211, 238, .14);
-  --line-2:    rgba(34, 211, 238, .28);
-  --line-soft: rgba(34, 211, 238, .07);
+  --bg:        var(--kdl-bg);
+  --bg2:       var(--kdl-bg-alt);
+  --panel:     var(--kdl-surface);
+  --elev:      var(--kdl-surface-raised);
+  --hover:     var(--kdl-surface-soft);
+  --fg:        var(--kdl-text-secondary);
+  --fg-strong: var(--kdl-text);
+  --muted:     var(--kdl-text-muted);
+  --cyan:      var(--kdl-accent);
+  --turq:      var(--kdl-accent-hover);
+  --blue:      var(--kdl-accent);
+  --cyan-soft: var(--kdl-accent-soft);
+  --ok:        var(--kdl-success);
+  --warn:      var(--kdl-warning);
+  --err:       var(--kdl-danger);
+  --line:      var(--kdl-border-soft);
+  --line-2:    var(--kdl-border);
+  --line-soft: var(--kdl-border-soft);
   --radius:    12px;
   --radius-sm: 8px;
-  --shadow:    0 10px 34px rgba(2, 8, 23, .55);
-  --shadow-sm: 0 4px 14px rgba(2, 8, 23, .4);
+  --shadow:    var(--kdl-shadow-md);
+  --shadow-sm: var(--kdl-shadow-sm);
   --ease:      cubic-bezier(.2, .7, .2, 1);
   --dur:       .14s;
 }
@@ -47,7 +74,7 @@ body { display: flex; flex-direction: column; }
 
 /* Accessibilité : focus clavier toujours visible */
 :focus { outline: none; }
-:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 6px; }
+:focus-visible { outline: 2px solid var(--kdl-focus); outline-offset: 2px; border-radius: 6px; }
 
 /* ── Boutons icône (SVG, trait cohérent) ───────────────────────────────── */
 .ico-btn {
@@ -65,6 +92,10 @@ body { display: flex; flex-direction: column; }
   pointer-events: none;
 }
 .ico-btn:hover { background: var(--elev); color: var(--fg-strong); border-color: var(--line); }
+/* Bouton thème : n'affiche que l'icône de la cible (lune en clair, soleil en sombre) */
+#btn-theme .ico-sun, #btn-theme .ico-moon { display: none; }
+[data-theme="light"] #btn-theme .ico-moon { display: block; }
+[data-theme="dark"]  #btn-theme .ico-sun  { display: block; }
 .ico-btn:active { transform: translateY(1px); }
 .ico-btn:disabled { opacity: .35; cursor: default; }
 .ico-btn:disabled:hover { background: transparent; border-color: transparent; color: var(--fg); }
@@ -82,7 +113,7 @@ body { display: flex; flex-direction: column; }
 }
 #tabbar .ico-btn, .tab, #brand-logo { -webkit-app-region: no-drag; }
 #brand-logo { width: 22px; height: 22px; align-self: center; margin: 0 8px 5px 2px;
-  border-radius: 5px; flex-shrink: 0; filter: drop-shadow(0 1px 4px rgba(6,182,212,.35)); }
+  border-radius: 5px; flex-shrink: 0; filter: drop-shadow(0 1px 3px rgba(35,40,45,.22)); }
 #tabs { display: flex; gap: 3px; overflow-x: auto; flex: 1; scrollbar-width: none; }
 #tabs::-webkit-scrollbar { height: 0; }
 
@@ -273,10 +304,10 @@ body:has(#panel:not(.hidden)) #panel-backdrop { display: block; }
 .btn-full:hover { border-color: var(--line-2); color: var(--fg-strong); background: var(--elev); }
 .btn-accent {
   border-color: transparent;
-  background: linear-gradient(135deg, var(--cyan), var(--turq)); color: #032;
+  background: linear-gradient(135deg, var(--cyan), var(--turq)); color: var(--kdl-text-on-accent);
   font-weight: 600;
 }
-.btn-accent:hover { filter: brightness(1.07); background: linear-gradient(135deg, var(--cyan), var(--turq)); color: #032; }
+.btn-accent:hover { filter: brightness(1.07); background: linear-gradient(135deg, var(--cyan), var(--turq)); color: var(--kdl-text-on-accent); }
 
 /* ── Toasts ────────────────────────────────────────────────────────────── */
 .toast {
@@ -378,7 +409,7 @@ small.muted { color: var(--muted); display: block; margin-top: 8px; line-height:
   transition: border-color var(--dur), color var(--dur), background var(--dur);
 }
 .ai-mode:hover { border-color: var(--line-2); color: var(--fg-strong); }
-.ai-mode.on { border-color: transparent; background: linear-gradient(135deg,var(--cyan),var(--turq)); color: #032; font-weight: 600; }
+.ai-mode.on { border-color: transparent; background: linear-gradient(135deg,var(--cyan),var(--turq)); color: var(--kdl-text-on-accent); font-weight: 600; }
 .ai-sub { margin: 6px 0; display: flex; flex-direction: column; gap: 6px; }
 .ai-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
 .ai-chip {

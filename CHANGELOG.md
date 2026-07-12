@@ -1,5 +1,14 @@
 # Changelog — KDL Privacy Dev Browser
 
+## Non publié — pilote KDL Design System
+- Adoption du **KDL Design System v0.1.0** (langage « Products ») : thème **clair
+  par défaut** (ivoire/sable) + thème **sombre** (ardoise bleutée), accent bleu KDL
+  repris du site à la place du cyan néon.
+- Bascule de thème (bouton barre d'outils + `Ctrl+Shift+L`), mémorisée
+  (`localStorage kdl-theme`), anti-flash (`theme-boot.js`), propagée à la page
+  d'accueil (`?theme=`). Aucun changement fonctionnel ni de sécurité Electron.
+- Page d'accueil épurée (fond sobre sans néon/circuit décoratif), logo Products conservé.
+
 ## 1.3.0 — IA locale facultative + mode lecture
 - KDL IA (panneau) : KDL IA Lite (local, outils non génératifs actifs + modèle génératif
   à installer), Ollama local facultatif, « Mon IA » BYOK via API (Claude/OpenAI/Gemini/Grok
