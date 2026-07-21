@@ -23,7 +23,8 @@
   "build": {
     "appId": "fr.kdl-tech.privacy-dev-browser",
     "productName": "KDL Privacy Dev Browser",
-    "copyright": "© KDL-TECH — MIT",
+    "copyright": "© 2026 KDL TECH. Tous droits réservés.",
+    "publish": [{ "provider": "github", "releaseType": "release" }],
     "directories": { "output": "dist", "buildResources": "build" },
     "files": [
       "src/**/*",
