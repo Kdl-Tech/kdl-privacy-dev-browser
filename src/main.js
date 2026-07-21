@@ -113,6 +113,23 @@ app.whenReady().then(() => {
 
   createWindow();
 
+  // Mise à jour automatique via GitHub Releases (uniquement en version installée).
+  if (app.isPackaged) {
+    try {
+      const { autoUpdater } = require('electron-updater');
+      autoUpdater.autoDownload = true;
+      autoUpdater.on('update-downloaded', (info) => {
+        dialog.showMessageBox({
+          type: 'info', buttons: ['Redémarrer maintenant', 'Plus tard'], defaultId: 0,
+          title: 'Mise à jour KDL Privacy Browser',
+          message: `Version ${info && info.version ? info.version : 'nouvelle'} téléchargée.`,
+          detail: 'Redémarrer pour installer la mise à jour ?',
+        }).then((r) => { if (r.response === 0) autoUpdater.quitAndInstall(); });
+      });
+      autoUpdater.checkForUpdatesAndNotify();
+    } catch { /* electron-updater indisponible : démarrage normal */ }
+  }
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

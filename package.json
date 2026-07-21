@@ -1,6 +1,6 @@
 {
   "name": "kdl-privacy-dev-browser",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "KDL Privacy Dev Browser — navigateur léger, privé et orienté développeur, avec IA locale facultative.",
   "main": "src/main.js",
   "author": "KDL-TECH",
@@ -24,8 +24,16 @@
     "appId": "fr.kdl-tech.privacy-dev-browser",
     "productName": "KDL Privacy Dev Browser",
     "copyright": "© 2026 KDL TECH. Tous droits réservés.",
-    "publish": [{ "provider": "github", "releaseType": "release" }],
-    "directories": { "output": "dist", "buildResources": "build" },
+    "publish": [
+      {
+        "provider": "github",
+        "releaseType": "release"
+      }
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
     "files": [
       "src/**/*",
       "assets/**/*",
@@ -35,7 +43,10 @@
     ],
     "extraResources": [],
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "category": "Network;WebBrowser",
       "icon": "build/icon.png",
       "maintainer": "KDL-TECH",
@@ -47,7 +58,10 @@
       }
     },
     "win": {
-      "target": ["nsis", "portable"],
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "icon": "build/icon.png"
     },
     "nsis": {
@@ -57,9 +71,14 @@
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "category": "public.app-category.productivity",
       "icon": "build/icon.png"
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }
