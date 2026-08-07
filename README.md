@@ -1,218 +1,94 @@
-<div align="center">
+**Français** · [English](README.en.md)
 
-# 🔒 KDL Privacy Dev Browser
+# KDL Privacy Dev Browser
 
-**A lightweight Electron browser for developers who don't want to be tracked — private search, real dev tools, optional local AI, and zero telemetry.**
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-1F5278.svg)](LICENSE)
-[![No telemetry](https://img.shields.io/badge/Telemetry-none-22c55e.svg)](#privacy)
-[![Electron](https://img.shields.io/badge/Electron-hardened-47848F.svg)](#electron-security)
-[![Linux · Windows · macOS](https://img.shields.io/badge/Linux%20%C2%B7%20Windows%20%C2%B7%20macOS-supported-blue.svg)]()
-
-*🇫🇷 [Documentation française complète plus bas](#-documentation-française)*
-
-</div>
-
----
-
-## What it is
-
-A desktop browser built for the two things Chrome does badly: **not watching you**,
-and **not making you install five extensions to inspect a page**. Built on Electron,
-daily-driven on Linux Mint, packaged for Windows and macOS too.
-
-**Free software, MIT.** No paid dependency, no mandatory proprietary service, no
-account, no tracking.
-
-## Features
-
-- **Private browsing** — DuckDuckGo by default, minimal local history you can
-  disable, "clear on close", optional third-party cookie blocking, **no telemetry
-  of any kind**
-- **Built-in dev tools** — page DevTools, one-click site-data wipe (cookies, cache,
-  local/sessionStorage), full-page screenshot, responsive modes (desktop/tablet/
-  mobile), page info panel (URL, title, domain, HTTPS, user-agent)
-- **Lightweight page audit** — title / meta description / H1 presence, HTTPS,
-  images missing `alt`, external links, overall verdict. *(Not a Lighthouse
-  replacement.)*
-- **Reading mode** — clean extraction, 3 themes, adjustable size/width/line-height,
-  reading time, **Markdown export**, **PDF printing**
-- **Optional local AI (KDL IA)** — three levels, always opt-in:
-  - *KDL IA Lite* — small **local** model, free, no account, no GPU required;
-    instant local tools (extractive summary, key points, keywords)
-  - *Ollama* — optional local backend, never auto-installed, never cloud
-  - *BYOK* — bring your own API key (Claude, OpenAI, Gemini, Grok, OpenAI-compatible
-    endpoints); the key is stored locally and never exposed
-  - **The browser works fully without any AI**, offline, with no model installed
-- **Onion Search** — via the public Ahmia index. `.onion` addresses are **never**
-  opened inside Electron; a warning offers to hand off to an external Tor Browser
-  if one is detected. Legal use only.
-
-<a id="electron-security"></a>
-## Electron hardening
-
-`contextIsolation: true` · `nodeIntegration: false` · `sandbox: true` · minimal
-preload exposing a single narrow API (`window.kdl`) · isolated `<webview>` · no
-arbitrary code execution from web pages · external window opening routed to the
-system browser via `setWindowOpenHandler` · sensitive permissions (camera, mic,
-geolocation, notifications) denied by default · strict CSP on the UI.
-
-<a id="privacy"></a>
-## Privacy stance
-
-No telemetry, no analytics, no phone-home — including for the AI panel, which
-never sees passwords, cookies or other tabs, and asks for confirmation before any
-remote send or on a sensitive page. See `docs/KDL_AI_PRIVACY.md`.
-
-## Quick start
+Un navigateur de bureau qui ne vous observe pas et qui embarque déjà les outils qu'on
+finit toujours par installer en extensions : inspection de page, effacement des données du
+site, capture pleine page, mode lecture, audit rapide.
 
 ```bash
-npm install
-npm start          # or: npm run dev (with DevTools)
+git clone https://github.com/Kdl-Tech/kdl-privacy-dev-browser.git
+cd kdl-privacy-dev-browser && npm install && npm start
 ```
 
-> On Linux, if the Electron sandbox misbehaves (Mint without setuid `chrome-sandbox`):
-> `npm start -- --no-sandbox` — avoid in normal use.
+![Fenêtre de KDL Privacy Dev Browser sur sa page d'accueil : barre d'adresse DuckDuckGo, boutons DuckDuckGo, Favoris, DevTools, Onion Search et Effacer session, avec la mention « Session privée locale — aucune télémétrie, aucun compte requis »](docs/screenshot-accueil.png)
 
-## Trademarks
+## Ce que ça fait
 
-DuckDuckGo, Tor Browser and Ahmia are used as described above. KDL Privacy Dev
-Browser is **not affiliated with DuckDuckGo, the Tor Project or Ahmia**, and uses
-none of their logos as branding.
+| | |
+|---|---|
+| **Navigation privée** | DuckDuckGo par défaut, historique local minimal et désactivable, effacement à la fermeture, blocage optionnel des cookies tiers, aucune télémétrie |
+| **Outils développeur** | DevTools de la page, effacement des données du site en un clic (cookies, cache, local/sessionStorage), capture pleine page, modes bureau/tablette/mobile, panneau d'informations (URL, titre, domaine, HTTPS, user-agent) |
+| **Audit rapide** | titre, meta description, présence de H1, HTTPS, images sans `alt`, liens externes, verdict global |
+| **Mode lecture** | extraction propre, trois thèmes, taille et largeur réglables, temps de lecture, export Markdown, impression PDF |
+| **IA locale facultative** | modèle léger local, backend Ollama optionnel, ou votre propre clé API — le navigateur fonctionne entièrement sans IA |
+| **Onion Search** | recherche via l'index public Ahmia, avec passage de relais au Tor Browser |
+| **Mise à jour** | via GitHub Releases (electron-updater) |
 
-## Contributing
+## Les adresses .onion ne s'ouvrent pas ici
 
-Most wanted: packaging fixes on Windows/macOS, and audit-rule improvements.
-⭐ helps other privacy-minded developers find it.
+Un navigateur Chromium ordinaire, mis face à une adresse en `.onion`, tente de la résoudre
+par le DNS habituel. Le service caché reste évidemment inaccessible, mais la requête, elle,
+est partie en clair vers votre résolveur, puis vers votre opérateur : la seule chose que
+l'opération a réussie, c'est de signaler ce que vous cherchiez.
 
----
+Ce navigateur ne fait donc jamais cette tentative. Une adresse `.onion` saisie dans la
+barre affiche un avertissement, et propose la seule option correcte : passer la main au
+Tor Browser s'il est installé sur la machine. Le panneau Onion Search, lui, interroge
+l'index **public** d'Ahmia en HTTPS ordinaire — c'est une page web classique, pas un accès
+au réseau Tor.
 
-<a id="-documentation-française"></a>
+## Durcissement Electron
 
-## 🇫🇷 Documentation française
+`contextIsolation: true` · `nodeIntegration: false` · `sandbox: true` · un preload minimal
+exposant une seule API étroite (`window.kdl`) · pages web isolées dans un `<webview>` ·
+ouverture de fenêtre externe redirigée vers le navigateur système via
+`setWindowOpenHandler` · caméra, micro, géolocalisation et notifications refusés par
+défaut · CSP stricte sur l'interface.
 
-Navigateur de bureau **léger, confidentiel et orienté développeur**, basé sur Electron.
-Pensé pour Linux Mint (fonctionne aussi sur les autres plateformes Electron).
+Aucune page visitée ne peut exécuter de code hors de son bac à sable, ni atteindre le
+système de fichiers.
 
-> **Logiciel libre et gratuit** — licence MIT. Aucune dépendance payante, aucun service
-> propriétaire obligatoire, aucun compte requis, aucun tracking.
+## Ce que ça ne fait pas
 
-## Nouveautés — 1.3.0 (IA locale + mode lecture)
+- **Ce n'est pas un navigateur anonyme.** Il ne route rien par Tor, ne masque pas votre
+  adresse IP et ne remplace pas le Tor Browser. Il évite le pistage commercial, pas la
+  surveillance ciblée.
+- **Ce n'est pas Lighthouse.** L'audit de page vérifie une poignée de points utiles au
+  quotidien, pas les performances ni l'accessibilité complète.
+- **L'IA n'est pas installée d'office.** Aucun modèle n'est téléchargé sans action de votre
+  part, Ollama n'est jamais installé automatiquement, et une clé API que vous fournissez
+  reste stockée localement. Le panneau IA ne voit ni vos mots de passe, ni vos cookies, ni
+  vos autres onglets, et demande confirmation avant tout envoi distant.
+- **Il ne transmet rien.** Pas de compte, pas d'analytics, pas d'appel maison.
 
-- **KDL IA** (panneau assistant) à trois niveaux, IA **facultative** :
-  - **KDL IA Lite** — petite IA **locale, gratuite, sans compte ni carte graphique** ;
-    outils locaux immédiats (résumé extractif, points clés, mots-clés) + modèle génératif
-    à installer volontairement (CPU/WASM). Voir `docs/KDL_AI_LITE.md`.
-  - **Ollama** local facultatif (jamais installé/pull auto, jamais de cloud).
-  - **Mon IA (BYOK)** — connectez **votre** compte via API (Claude, OpenAI/Codex, Gemini,
-    Grok, endpoint compatible OpenAI) avec **votre** clé, stockée localement, jamais exposée.
-- **Mode lecture** sans distraction : extraction propre, 3 thèmes, taille/largeur/interligne,
-  temps de lecture, export **Markdown**, impression **PDF**, outils locaux + IA.
-- Confidentialité IA stricte (`docs/KDL_AI_PRIVACY.md`) : jamais de mots de passe/cookies/
-  autres onglets ; confirmation sur page sensible ou envoi distant.
-- Effet visuel sur « effacer la session » (respecte `prefers-reduced-motion`).
-- Logo KDL TECH dans la barre du navigateur.
-- Distribution multi-plateforme configurée (`docs/OFFLINE_EDITION_ARCHITECTURE.md`) :
-  `.AppImage`/`.deb` (Linux), `.exe` (Windows), `.dmg` (macOS).
-- L'IA n'est **jamais** requise : le navigateur fonctionne sans modèle, hors ligne, sans Ollama.
-
-## Nouveautés — 1.2.0 (refonte visuelle premium)
-
-- **Identité KDL TECH** : logo officiel, icônes d'application régénérées, palette
-  navy/cyan et typographies Space Grotesk / Inter alignées sur `kdl-tech.fr`.
-- **Interface repensée** : jeu d'icônes **SVG** cohérent (plus aucun emoji), menu
-  d'outils regroupé, barre d'adresse mise en avant, indicateur de sécurité HTTPS.
-- **Onglets** : favicon réel, indicateur de chargement, fermeture claire.
-- **Page d'accueil** : monogramme officiel, grande recherche centrale, raccourcis
-  fonctionnels, fond technique 100 % CSS (aucune ressource distante).
-- **Raccourcis** : `Ctrl+L/T/W/D/J`, `Ctrl+Shift+T` (rouvrir), zoom `Ctrl +/-/0`,
-  `Alt+←/→`, DevTools `F12`.
-- **Accessibilité** : focus clavier visible, `prefers-reduced-motion` respecté.
-- **Préparation IA** (désactivée) : contrat fournisseur abstrait + `docs/FUTURE_AI_ARCHITECTURE.md`.
-  Aucune IA, clé, ni appel réseau ajouté.
-
-## Fonctions V1
-
-- **Navigation fluide** : barre d'adresse/recherche, précédent / suivant / recharger / accueil,
-  page d'accueil dédiée, mode sombre sobre.
-- **Recherche privée** : DuckDuckGo par défaut.
-- **Outils développeur** :
-  - DevTools de la page,
-  - nettoyage des données du site courant (cookies, cache, local/sessionStorage),
-  - capture d'écran de la page (`~/Bureau/kdl-captures/`),
-  - modes responsive (Desktop / Tablette / Mobile),
-  - panneau infos page (URL, titre, domaine, protocole HTTPS, user-agent).
-- **Audit léger maison** : présence title / meta description / H1, HTTPS, images sans `alt`,
-  liens externes, statut global OK / à vérifier. (Pas un remplacement de Lighthouse.)
-- **Confidentialité** : aucune télémétrie, historique local minimal et désactivable,
-  option « effacer à la fermeture », blocage cookies tiers (option), aucun tracking KDL.
-- **Onion Search** : recherche via la page **publique Ahmia**. Les adresses `.onion` ne sont
-  **jamais** ouvertes dans Electron ; un avertissement propose l'ouverture via **Tor Browser**
-  externe s'il est détecté. Usage légal uniquement.
-
-## Sécurité Electron
-
-- `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`
-- preload minimal exposant une API nommée et réduite (`window.kdl`)
-- `<webview>` isolée (`contextIsolation=yes, nodeIntegration=no, sandbox=yes`)
-- aucune exécution de code arbitraire issu des pages web
-- ouverture de fenêtres externes contrôlée (`setWindowOpenHandler` → navigateur système)
-- permissions web sensibles refusées par défaut (caméra, micro, géoloc, notifications)
-- CSP stricte sur l'UI
-
-## Installation & lancement
+## Construire les paquets
 
 ```bash
-cd ~/Bureau/kdl-privacy-dev-browser
-npm install
-npm start        # ou : npm run dev (DevTools ouverts)
+npm run dist:linux   # AppImage + .deb
+npm run dist:win     # NSIS + portable
+npm run dist:mac     # dmg
+npm run audit:secrets  # vérifie qu'aucun secret ne traîne dans les sources
 ```
 
-> Sous Linux, si la sandbox Electron pose problème (Mint sans `chrome-sandbox` setuid) :
-> `npm start -- --no-sandbox` (à éviter en usage normal).
+Sous Linux, si le bac à sable Electron pose problème (Mint sans `chrome-sandbox` setuid) :
+`npm start -- --no-sandbox`. À éviter en usage normal.
 
-## Scripts
+## Prérequis
 
-| Script | Rôle |
-|--------|------|
-| `npm start` | Lance l'application |
-| `npm run dev` | Lance avec DevTools de l'UI |
-| `npm run build` | Build via electron-builder (optionnel, à ajouter en V2) |
-| `npm run audit:secrets` | Vérifie l'absence de secrets dans le dépôt |
+Node.js 18 ou plus pour le développement. Linux, Windows et macOS pour l'usage.
 
-## Raccourcis
+## Marques citées
 
-- `Ctrl+L` : focus barre d'adresse · `Ctrl+R` : recharger · `F12` : DevTools page
-- `Ctrl+Shift+M` : barre responsive
-
-## Marques & affiliation
-
-- **DuckDuckGo** est utilisé comme moteur de recherche par défaut.
-- **Tor Browser** sert uniquement d'ouverture externe optionnelle pour les `.onion`.
-- **Ahmia** est utilisé pour la recherche publique.
-- KDL Privacy Dev Browser **n'est affilié ni à DuckDuckGo, ni au Tor Project, ni à Ahmia**.
-  Aucun logo ni marque de ces projets n'est utilisé comme branding officiel.
+DuckDuckGo, Tor Browser et Ahmia sont mentionnés pour ce qu'ils sont. KDL Privacy Dev
+Browser **n'est affilié ni à DuckDuckGo, ni au Tor Project, ni à Ahmia**, et n'utilise
+aucun de leurs logos.
 
 ## Licence
 
-[MIT](LICENSE) © KDL-TECH / Karim DeLucia.
-
-## Roadmap
-
-Voir [docs/ROADMAP.md](docs/ROADMAP.md). V2 prévoit VPN (WireGuard), assistant IA Maia/KDL et
-rapports client PDF/HTML — **non implémentés en V1**.
+MIT — voir [LICENSE](LICENSE).
 
 ---
 
-<div align="center">
-
-**Autres outils [KDL TECH](https://kdl-tech.fr)** — atelier indépendant de dépannage
-informatique et de développement en Guadeloupe 🇬🇵
-
-[Anti-arnaque](https://github.com/Kdl-Tech/kdl-anti-arnaque) ·
-[Prompt Studio](https://github.com/Kdl-Tech/kdl-prompt-studio) ·
-[DNS Shield](https://github.com/Kdl-Tech/kdl-dns-shield) ·
-[Security Free](https://github.com/Kdl-Tech/kdl-security-free) ·
-[MAIA Conky](https://github.com/Kdl-Tech/maia-conky)
-
-</div>
+**KDL TECH** — dépannage informatique, développement et outils logiciels.
+[kdl-tech.fr](https://kdl-tech.fr)
