@@ -37,7 +37,7 @@ IPC handlers existants : `clear-site-data`, `clear-all`, `open-external`, `about
 - **Local uniquement** : NE PAS toucher VPS / site / DNS / Cloudflare / Nginx / PM2 / Maia / Launcher.
 - **IA facultative** : jamais requise au démarrage/navigation. Le navigateur doit tourner sans modèle,
   sans Internet, sans Ollama, sans WebGPU.
-- **Modèle** : ne JAMAIS télécharger sans autorisation explicite de Karim (une seule demande avant le test réel).
+- **Modèle** : ne JAMAIS télécharger sans autorisation explicite de l'éditeur (une seule demande avant le test réel).
 - **Modèles hors Git** : stockés sous `userData/ai-models/` (ajouter au `.gitignore`).
 - **Commits locaux OK, aucun push.**
 
