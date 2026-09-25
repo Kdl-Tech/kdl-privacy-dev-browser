@@ -93,4 +93,4 @@ MIT — see [LICENSE](LICENSE).
 
 ---
 
-**Publisher** — KDL TECH, trading name of Karim Laurent De Lucia, sole trader (*entrepreneur individuel*, France) · SIRET 423 471 481 00022 · NAF/APE 95.11Z · LD Caraque, Rue Narcisse Louis, 97139 Les Abymes, Guadeloupe, France · [contact@kdl-tech.fr](mailto:contact@kdl-tech.fr) · [kdl-tech.fr](https://kdl-tech.fr)
+**Publisher** — KDL TECH · SIRET 423 471 481 00022 · NAF/APE 95.11Z · Guadeloupe, France · [contact@kdl-tech.fr](mailto:contact@kdl-tech.fr) · [kdl-tech.fr](https://kdl-tech.fr) · [Legal notice](https://kdl-tech.fr/legal.html)
