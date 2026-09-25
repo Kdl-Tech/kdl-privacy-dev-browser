@@ -1,6 +1,6 @@
 # Changelog — KDL Privacy Dev Browser
 
-## Non publié — pilote KDL Design System
+## 1.3.2 — Thème Lagon (KDL Design System)
 - Adoption du **KDL Design System v0.1.0** (langage « Products ») : thème **clair
   par défaut** (ivoire/sable) + thème **sombre** (ardoise bleutée), accent bleu KDL
   repris du site à la place du cyan néon.
