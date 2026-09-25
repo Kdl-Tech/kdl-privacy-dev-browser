@@ -1,38 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   KDL Privacy Dev Browser — système visuel
-   Palette officielle KDL TECH (DESIGN_SYSTEM.md, repo kdl-tech-v2).
-   Structure prête pour un futur thème clair : tout passe par les variables.
+   KDL Privacy Dev Browser — système visuel « Lagon » (25/09/2026)
+   Jetons --kdl-* fournis par kdl/kdl-theme-light.css + kdl/kdl-theme-dark.css
+   (mêmes valeurs que kdl-tech.fr), chargés avant ce fichier. Polices par
+   kdl/kdl-fonts-lagon.css. Le thème est piloté par [data-theme] sur <html>
+   (kdl-theme, anti-flash dans theme-boot.js).
    ═══════════════════════════════════════════════════════════════════════ */
-/* ── KDL Design System v0.1.0 (intégré en copie) ─────────────────────────
-   Tokens clair (défaut) + sombre. Voir repo kdl-design-system/docs.
-   Le thème est piloté par [data-theme] sur <html> (kdl-theme, anti-flash). */
-:root,
-[data-theme="light"] {
-  color-scheme: light;
-  --kdl-bg: #F3EFE6; --kdl-bg-alt: #EBE5D8;
-  --kdl-surface: #FBF8F1; --kdl-surface-soft: #F4F0E7; --kdl-surface-raised: #FFFFFF;
-  --kdl-text: #23282D; --kdl-text-secondary: #55606A; --kdl-text-muted: #6E7780;
-  --kdl-text-on-accent: #FFFFFF;
-  --kdl-border: #D9D0BF; --kdl-border-soft: #E7E0D2;
-  --kdl-accent: #0B3D68; --kdl-accent-hover: #0D4F7A; --kdl-accent-soft: rgba(52,152,219,.12);
-  --kdl-focus: #2F80C2;
-  --kdl-success: #2F9E6A; --kdl-warning: #B7791F; --kdl-danger: #CF3D4E;
-  --kdl-shadow-sm: 0 2px 8px rgba(35,40,45,.06);
-  --kdl-shadow-md: 0 6px 20px rgba(35,40,45,.09);
-}
-[data-theme="dark"] {
-  color-scheme: dark;
-  --kdl-bg: #171B20; --kdl-bg-alt: #1D2228;
-  --kdl-surface: #232830; --kdl-surface-soft: #1C2127; --kdl-surface-raised: #2A313A;
-  --kdl-text: #ECE7DB; --kdl-text-secondary: #B3AFA6; --kdl-text-muted: #8A8F95;
-  --kdl-text-on-accent: #08243A;
-  --kdl-border: #363C44; --kdl-border-soft: #2B313A;
-  --kdl-accent: #5BA3E6; --kdl-accent-hover: #7CB7EE; --kdl-accent-soft: rgba(91,163,230,.16);
-  --kdl-focus: #5DADE2;
-  --kdl-success: #4CC38A; --kdl-warning: #E0A03A; --kdl-danger: #F0687A;
-  --kdl-shadow-sm: 0 3px 10px rgba(0,0,0,.35);
-  --kdl-shadow-md: 0 8px 24px rgba(0,0,0,.42);
-}
 
 /* ── Alias legacy → tokens KDL : les styles existants restent inchangés ── */
 :root {
@@ -67,7 +39,7 @@
 html, body {
   margin: 0; height: 100%;
   background: var(--bg); color: var(--fg);
-  font: 13px/1.45 "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  font: 13px/1.45 "Onest", system-ui, "Segoe UI", Roboto, sans-serif;
   overflow: hidden;
 }
 body { display: flex; flex-direction: column; }
@@ -249,7 +221,7 @@ body:has(#panel:not(.hidden)) #panel-backdrop { display: block; }
 .panel-head {
   display: flex; justify-content: space-between; align-items: center;
   padding: 12px 10px 12px 16px; border-bottom: 1px solid var(--line);
-  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+  font-family: "Bricolage Grotesque", "Onest", system-ui, sans-serif;
   font-weight: 600; font-size: 14px; color: var(--fg-strong);
 }
 #panel-body { padding: 14px 16px; overflow: auto; }
@@ -350,7 +322,7 @@ small.muted { color: var(--muted); display: block; margin-top: 8px; line-height:
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 9px 14px; background: var(--r-surf); border-bottom: 1px solid var(--r-line);
 }
-.reader-brand { font-family: "Space Grotesk","Inter",sans-serif; font-weight: 600; color: var(--r-acc); font-size: 14px; }
+.reader-brand { font-family: "Bricolage Grotesque","Onest",sans-serif; font-weight: 600; color: var(--r-acc); font-size: 14px; }
 .reader-ctrls { display: flex; gap: 3px; }
 .reader-ctrls .ico-btn { color: var(--r-fg2); }
 .reader-ctrls .ico-btn:hover { color: var(--r-fg); background: rgba(127,127,127,.14); border-color: var(--r-line); }
@@ -360,10 +332,10 @@ small.muted { color: var(--muted); display: block; margin-top: 8px; line-height:
 
 .reader-scroll { flex: 1; overflow: auto; outline: none; }
 .reader-doc { max-width: var(--r-width); margin: 0 auto; padding: 40px 26px 90px; font-size: var(--r-font); line-height: var(--r-lh); }
-.reader-title { font-family: "Space Grotesk","Inter",sans-serif; font-size: 1.7em; line-height: 1.2; margin: 0 0 10px; color: var(--r-fg); }
+.reader-title { font-family: "Bricolage Grotesque","Onest",sans-serif; font-size: 1.7em; line-height: 1.2; margin: 0 0 10px; color: var(--r-fg); }
 .reader-meta { color: var(--r-fg2); font-size: .78em; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--r-line); }
 .reader-content p { margin: 0 0 1.1em; }
-.reader-content h1,.reader-content h2,.reader-content h3,.reader-content h4 { font-family: "Space Grotesk","Inter",sans-serif; line-height: 1.25; margin: 1.5em 0 .5em; color: var(--r-fg); }
+.reader-content h1,.reader-content h2,.reader-content h3,.reader-content h4 { font-family: "Bricolage Grotesque","Onest",sans-serif; line-height: 1.25; margin: 1.5em 0 .5em; color: var(--r-fg); }
 .reader-content a { color: var(--r-acc); text-decoration: underline; text-underline-offset: 2px; }
 .reader-content ul,.reader-content ol { padding-left: 1.4em; margin: 0 0 1.1em; }
 .reader-content li { margin: .3em 0; }
@@ -384,7 +356,7 @@ small.muted { color: var(--muted); display: block; margin-top: 8px; line-height:
 .reader-chip:disabled { opacity: .5; cursor: default; }
 
 .reader-ai-out { background: var(--r-surf); border: 1px solid var(--r-line); border-radius: 12px; padding: 14px 16px; margin: 0 0 24px; font-size: .9em; }
-.reader-out-head { font-family: "Space Grotesk","Inter",sans-serif; font-weight: 600; color: var(--r-fg); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.reader-out-head { font-family: "Bricolage Grotesque","Onest",sans-serif; font-weight: 600; color: var(--r-fg); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
 .reader-out-body p { margin: 0; color: var(--r-fg); } .reader-out-body ul { margin: 0; padding-left: 1.3em; }
 .kw { display: flex; flex-wrap: wrap; gap: 7px; }
 .kw-item { font-size: .82em; padding: 3px 10px; border-radius: 20px; background: var(--cyan-soft); color: var(--r-acc); border: 1px solid var(--r-line); }
@@ -420,7 +392,7 @@ small.muted { color: var(--muted); display: block; margin-top: 8px; line-height:
 .ai-chip:hover { border-color: var(--cyan); color: var(--cyan); }
 .ai-chip.gen { border-style: dashed; }
 .ai-out { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 10px 0 6px; font-size: 13px; }
-.ai-out-h { font-family: "Space Grotesk","Inter",sans-serif; font-weight: 600; color: var(--fg-strong); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.ai-out-h { font-family: "Bricolage Grotesque","Onest",sans-serif; font-weight: 600; color: var(--fg-strong); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
 .ai-out p { margin: 0; } .ai-out ul { margin: 0; padding-left: 1.3em; }
 .ai-preview { color: var(--muted); font-size: 12px; max-height: 120px; overflow: auto; padding: 8px; background: var(--bg2); border-radius: 8px; }
 #ai-len { width: 100%; accent-color: var(--cyan); }

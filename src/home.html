@@ -11,33 +11,35 @@
       document.documentElement.setAttribute('data-theme', m ? m[1] : 'light');
     })();
   </script>
+  <link rel="stylesheet" href="kdl/kdl-fonts-lagon.css" />
+  <link rel="stylesheet" href="kdl/kdl-theme.css" />
   <style>
     /* KDL Design System v0.1.0 — tokens (copie locale, sans dépendance réseau) */
     :root, [data-theme="light"] {
       color-scheme: light;
-      --bg:#F3EFE6; --bg-alt:#EBE5D8; --surface:#FBF8F1; --raised:#FFFFFF;
-      --text:#23282D; --text-2:#55606A; --muted:#6E7780;
-      --border:#D9D0BF; --border-soft:#E7E0D2;
-      --accent:#0B3D68; --accent-hover:#0D4F7A; --accent-soft:rgba(52,152,219,.12);
-      --focus:#2F80C2; --on-accent:#FFFFFF; --ok:#2F9E6A;
-      --grid:rgba(35,40,45,.05); --wash:rgba(47,128,194,.07);
-      --shadow:0 14px 38px rgba(35,40,45,.12);
+      --bg:#F3F7FA; --bg-alt:#E8EFF5; --surface:#FFFFFF; --raised:#FFFFFF;
+      --text:#0A1622; --text-2:#3E4A57; --muted:#5A6776;
+      --border:#DCE6EE; --border-soft:#E8EFF5;
+      --accent:#0A7475; --accent-hover:#085F60; --accent-soft:rgba(10,116,117,.12);
+      --focus:#FFC845; --on-accent:#FFFFFF; --ok:#1B8A5A;
+      --grid:rgba(18,60,99,.05); --wash:rgba(10,116,117,.08);
+      --shadow:0 14px 38px rgba(18,60,99,.14);
     }
     [data-theme="dark"] {
       color-scheme: dark;
-      --bg:#171B20; --bg-alt:#1D2228; --surface:#232830; --raised:#2A313A;
-      --text:#ECE7DB; --text-2:#B3AFA6; --muted:#8A8F95;
-      --border:#363C44; --border-soft:#2B313A;
-      --accent:#5BA3E6; --accent-hover:#7CB7EE; --accent-soft:rgba(91,163,230,.16);
-      --focus:#5DADE2; --on-accent:#08243A; --ok:#4CC38A;
-      --grid:rgba(255,255,255,.04); --wash:rgba(91,163,230,.10);
-      --shadow:0 16px 40px rgba(0,0,0,.5);
+      --bg:#0B1826; --bg-alt:#0F1F31; --surface:#12243A; --raised:#183049;
+      --text:#E6EEF6; --text-2:#AFC0D2; --muted:#8FA6BC;
+      --border:#23405E; --border-soft:#1A3350;
+      --accent:#3CC8C2; --accent-hover:#5ED6D1; --accent-soft:rgba(60,200,194,.16);
+      --focus:#FFC845; --on-accent:#04282A; --ok:#4CC48C;
+      --grid:rgba(255,255,255,.04); --wash:rgba(60,200,194,.10);
+      --shadow:0 16px 40px rgba(0,0,0,.55);
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
     body {
       background: var(--bg); color: var(--text-2);
-      font: 14px/1.55 "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+      font: 14px/1.55 "Onest", system-ui, "Segoe UI", Roboto, sans-serif;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       padding: 40px 24px; text-align: center; position: relative; overflow: hidden;
       -webkit-font-smoothing: antialiased;
@@ -65,7 +67,7 @@
       animation: rise .5s cubic-bezier(.2,.7,.2,1) both; }
     .brand img { width: 76px; height: 76px; object-fit: contain;
       filter: drop-shadow(0 6px 18px rgba(35,40,45,.18)); }
-    .title { font-size: clamp(23px,4.4vw,31px); font-weight: 700; letter-spacing: -.02em;
+    .title { font-family: "Bricolage Grotesque", "Onest", system-ui, sans-serif; font-size: clamp(23px,4.4vw,31px); font-weight: 700; letter-spacing: -.02em;
       color: var(--text); margin: 0; line-height: 1.12; }
     .title b { color: var(--accent); font-weight: 700; }
     .tagline { color: var(--muted); font-size: 13px; letter-spacing: .2px; margin: 0;
@@ -124,7 +126,7 @@
 
   <main>
     <div class="brand">
-      <img src="../assets/kdl-logo-official.png" alt="KDL TECH" />
+      <span class="kdl-logo"><img src="../assets/kdl-logo-official.png" alt="KDL TECH" /></span>
       <h1 class="title">KDL <b>Privacy</b> Dev Browser</h1>
       <p class="tagline">Navigation privée · outils dev · zéro tracking</p>
     </div>
@@ -161,6 +163,7 @@
       Assistant <b>KDL IA</b> local gratuit intégré · connectez aussi votre propre IA (API).<br>
       © 2026 KDL TECH. Tous droits réservés.
     </footer>
+    <aside data-kdl-promo data-app="privacy-browser"></aside>
   </main>
 
   <script>
@@ -172,5 +175,6 @@
       if (v) location.href = 'kdlgo://q/' + encodeURIComponent(v);
     });
   </script>
+  <script src="kdl/kdl-promo.js" defer></script>
 </body>
 </html>

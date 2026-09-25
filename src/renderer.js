@@ -553,9 +553,13 @@ document.getElementById('btn-about').onclick = async () => {
     <button id="about-gh" class="btn-full btn-accent">Voir sur GitHub</button>
     <small class="muted">Logiciel libre et gratuit. Non affilié à DuckDuckGo, au Tor Project ni à Ahmia.</small>
     <small class="muted">KDL IA : petite IA locale gratuite + possibilité de connecter votre propre IA (API).</small>
+    <aside data-kdl-promo data-app="privacy-browser" style="margin-top:14px"></aside>
   `);
   panelBody.querySelectorAll('.dl-os-btn').forEach((b) => b.onclick = () => window.kdl.openExternal(DOWNLOAD_URL));
   document.getElementById('about-gh').onclick = () => window.kdl.openExternal(GITHUB);
+  // L'encart promo est injecté après le DOMContentLoaded initial (panneau dynamique) :
+  // on redéclenche son montage explicitement (kdl/kdl-promo.js).
+  if (window.KDLPromo) window.KDLPromo.monter();
 };
 
 // Effacer à la fermeture (best effort).
