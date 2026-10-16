@@ -1,5 +1,9 @@
 # Changelog — KDL Privacy Dev Browser
 
+## 1.4.1 — Logo officiel
+- Page d'accueil, barre d'onglets et icônes de l'application : logo complet KDL TECH
+  (celui de kdl-tech.fr) à la place de l'ancien symbole sur plaque navy.
+
 ## 1.4.0 — TurboDL intégré
 - Nouvel outil **TurboDL** (menu Outils) : envoyer un lien, un magnet ou l'adresse de la page au
   gestionnaire de téléchargements TurboDL de KDL TECH, état de connexion, bouton de lancement.
