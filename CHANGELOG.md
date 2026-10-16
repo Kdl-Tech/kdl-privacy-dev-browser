@@ -1,5 +1,13 @@
 # Changelog — KDL Privacy Dev Browser
 
+## 1.4.0 — TurboDL intégré
+- Nouvel outil **TurboDL** (menu Outils) : envoyer un lien, un magnet ou l'adresse de la page au
+  gestionnaire de téléchargements TurboDL de KDL TECH, état de connexion, bouton de lancement.
+- Option **« Confier tous les téléchargements à TurboDL »** (désactivée par défaut) ; repli automatique
+  sur le gestionnaire intégré si TurboDL ne répond pas.
+- Les liens `magnet:` cliqués dans une page partent vers TurboDL.
+- Échanges uniquement avec `127.0.0.1` (même pont local que l'extension TurboDL).
+
 ## 1.3.2 — Thème Lagon (KDL Design System)
 - Adoption du **KDL Design System v0.1.0** (langage « Products ») : thème **clair
   par défaut** (ivoire/sable) + thème **sombre** (ardoise bleutée), accent bleu KDL

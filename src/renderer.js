@@ -834,6 +834,44 @@ document.getElementById('btn-ai').onclick = () => openAIPanel();
 document.getElementById('btn-downloads').onclick = () => openDownloadsPanel();
 
 // ===========================================================================
+// TurboDL : envoi des liens et des téléchargements au gestionnaire KDL TECH
+// ===========================================================================
+async function openTurboDLPanel() {
+  const st = await window.kdl.tdlStatus();
+  const u = cur() ? cur().getURL() : '';
+  const page = isHome(u) ? '' : u;
+  showPanel('TurboDL', `
+    <div class="row"><span class="k">État</span><span class="v">${st.running
+      ? `<span class="tag ok">CONNECTÉ</span> v${esc(st.version)}`
+      : '<span class="tag err">NON LANCÉ</span>'}</span></div>
+    ${st.running ? '' : '<button id="tdl-launch" class="btn-full">Lancer TurboDL</button>'}
+    <div class="field" style="padding-top:8px"><label for="tdl-url">Lien ou magnet à télécharger</label>
+      <input id="tdl-url" class="input" placeholder="https://…  ou  magnet:?…" autocomplete="off"></div>
+    <button id="tdl-go" class="btn-full">Envoyer à TurboDL</button>
+    ${page ? '<button id="tdl-page" class="btn-full">Envoyer l’adresse de cette page</button>' : ''}
+    <label class="row" style="cursor:pointer"><span class="k">Confier tous les téléchargements à TurboDL</span>
+      <span class="v"><input id="tdl-intercept" type="checkbox" ${st.intercept ? 'checked' : ''}></span></label>
+    <small class="muted">Les liens magnet cliqués dans une page partent toujours vers TurboDL. Si TurboDL ne répond pas, le téléchargement repasse par le gestionnaire intégré. Échanges en local uniquement (127.0.0.1).</small>
+  `);
+  const send = async (url) => {
+    const r = await window.kdl.tdlSend(url, page);
+    toast(r.ok ? `Envoyé à TurboDL${r.name ? ' : ' + r.name : ''}.` : (r.error || 'Échec de l’envoi.'), 3600);
+  };
+  const inp = document.getElementById('tdl-url');
+  document.getElementById('tdl-go').onclick = () => { if (inp.value.trim()) send(inp.value.trim()); else toast('Collez d’abord un lien.'); };
+  inp.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('tdl-go').click(); };
+  const pg = document.getElementById('tdl-page'); if (pg) pg.onclick = () => send(page);
+  const la = document.getElementById('tdl-launch');
+  if (la) la.onclick = async () => { const r = await window.kdl.tdlLaunch(); toast(r.ok ? 'TurboDL démarre…' : r.error); setTimeout(openTurboDLPanel, 4000); };
+  document.getElementById('tdl-intercept').onchange = async (e) => {
+    await window.kdl.tdlIntercept(e.target.checked);
+    toast(e.target.checked ? 'Les téléchargements partiront vers TurboDL.' : 'Gestionnaire intégré rétabli.');
+  };
+}
+document.getElementById('btn-turbodl').onclick = () => openTurboDLPanel();
+window.kdl.onTdlEvent((d) => toast(d.ok ? `Confié à TurboDL${d.name ? ' : ' + d.name : ''}.` : `TurboDL : ${d.error || 'échec'}${/^https?:/i.test(d.url) ? ' — téléchargement intégré.' : ''}`, 4000));
+
+// ===========================================================================
 // Centre de confidentialité par site
 // ===========================================================================
 const PERMS = [['camera', 'Caméra'], ['microphone', 'Microphone'], ['geolocation', 'Géolocalisation'], ['notifications', 'Notifications']];

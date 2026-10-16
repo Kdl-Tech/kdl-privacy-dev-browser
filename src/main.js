@@ -109,7 +109,22 @@ app.whenReady().then(() => {
   browseSession().setPermissionRequestHandler(handler);
 
   // Téléchargements : gestionnaire dédié (dossier dédié, aucune exécution/ouverture auto).
-  browseSession().on('will-download', (_e, item) => startDownload(item));
+  browseSession().on('will-download', (e, item, wc) => {
+    if (tdlShouldTake(item.getURL())) {          // confié à TurboDL (repli local si absent)
+      e.preventDefault();
+      tdlTakeOver(item.getURL(), wc && !wc.isDestroyed() ? wc.getURL() : '');
+      return;
+    }
+    startDownload(item);
+  });
+
+  // Liens magnet cliqués dans une page : envoyés à TurboDL.
+  app.on('web-contents-created', (_e, wc) => {
+    if (wc.getType() !== 'webview') return;
+    wc.on('will-navigate', (ev, url) => {
+      if (/^magnet:/i.test(url)) { ev.preventDefault(); tdlSend(url, wc.getURL()).then((r) => tdlNotify(r, url)); }
+    });
+  });
 
   createWindow();
 
@@ -594,3 +609,78 @@ async function detectTor() {
   }
   return { found: false };
 }
+
+// ===========================================================================
+// TurboDL : gestionnaire de téléchargements KDL TECH (pont local 127.0.0.1)
+// Même protocole que l'extension navigateur de TurboDL : rien ne sort de la machine.
+// ===========================================================================
+const TDL_PORT = 47321;
+const TDL_ORIGIN = 'chrome-extension://meihfeagmipglccincpdabodlikepcmo';
+const TDL_FILE = () => path.join(app.getPath('userData'), 'turbodl.json');
+const tdlBypass = new Set();                 // liens rendus au gestionnaire intégré
+let tdlCfg = null;
+function tdlConfig() {
+  if (!tdlCfg) { try { tdlCfg = JSON.parse(fs.readFileSync(TDL_FILE(), 'utf8')); } catch { tdlCfg = {}; } }
+  return tdlCfg;
+}
+function tdlSave() { try { fs.writeFileSync(TDL_FILE(), JSON.stringify(tdlCfg)); } catch { /* */ } }
+
+function tdlPost(route, body, timeout) {
+  return new Promise((resolve) => {
+    const data = Buffer.from(JSON.stringify(body || {}));
+    const req = http.request({
+      host: '127.0.0.1', port: TDL_PORT, path: route, method: 'POST', timeout,
+      headers: { 'Content-Type': 'application/json', 'Content-Length': data.length, Origin: TDL_ORIGIN },
+    }, (res) => {
+      let buf = ''; res.setEncoding('utf8');
+      res.on('data', (c) => { if (buf.length < 65536) buf += c; });
+      res.on('end', () => { try { resolve(JSON.parse(buf)); } catch { resolve({ ok: false, error: 'réponse illisible' }); } });
+    });
+    req.on('timeout', () => req.destroy(new Error('délai dépassé')));
+    req.on('error', () => resolve({ ok: false, offline: true, error: 'TurboDL ne répond pas (lancez-le).' }));
+    req.end(data);
+  });
+}
+
+async function tdlSend(url, referrer) {
+  url = String(url || '').trim();
+  if (!/^(https?:|magnet:)/i.test(url)) return { ok: false, error: 'Lien non pris en charge (http, https ou magnet).' };
+  const body = { url, referrer: referrer || '', userAgent: browseSession().getUserAgent() };
+  if (/^https?:/i.test(url)) {
+    try {   // cookies du site : nécessaires pour les liens de téléchargement protégés
+      const ck = await browseSession().cookies.get({ url });
+      if (ck.length) body.cookies = ck.map((c) => `${c.name}=${c.value}`).join('; ');
+    } catch { /* */ }
+  }
+  return tdlPost('/add', body, 30000);
+}
+
+function tdlNotify(r, url) {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('kdl:tdl-event', { ok: !!r.ok, error: r.error || '', name: r.name || '', url });
+}
+
+function tdlShouldTake(url) {
+  if (!tdlConfig().intercept || tdlBypass.has(url)) { tdlBypass.delete(url); return false; }
+  return /^https?:/i.test(url);
+}
+
+async function tdlTakeOver(url, referrer) {
+  const r = await tdlSend(url, referrer);
+  tdlNotify(r, url);
+  if (!r.ok) { tdlBypass.add(url); browseSession().downloadURL(url); }   // repli : gestionnaire intégré
+}
+
+ipcMain.handle('kdl:tdl-status', async () => {
+  const r = await tdlPost('/ping', {}, 2500);
+  return { running: !!r.ok, version: r.version || '', intercept: !!tdlConfig().intercept };
+});
+ipcMain.handle('kdl:tdl-send', async (_e, { url, referrer } = {}) => tdlSend(url, referrer));
+ipcMain.handle('kdl:tdl-intercept', async (_e, on) => { tdlConfig().intercept = !!on; tdlSave(); return { ok: true, intercept: !!on }; });
+ipcMain.handle('kdl:tdl-launch', async () => {
+  const cands = [path.join(os.homedir(), 'Desktop', 'TurboDL.exe'), path.join(os.homedir(), 'Bureau', 'TurboDL.exe'),
+    path.join(process.env.LOCALAPPDATA || '', 'Programs', 'TurboDL', 'TurboDL.exe')];
+  const exe = cands.find((p) => p && fs.existsSync(p));
+  if (exe) { const err = await shell.openPath(exe); return { ok: !err, error: err }; }
+  shell.openExternal('https://kdl-tech.fr/logiciels/turbodl/');
+  return { ok: false, error: 'TurboDL introuvable : page de téléchargement ouverte.' };
+});
