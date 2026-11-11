@@ -1,0 +1,42 @@
+name: Build & Release
+
+# Produit les exécutables Windows / macOS / Linux et les publie
+# en GitHub Release. Déclenché en poussant un tag de version (ex: v1.3.0).
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            args: --linux AppImage deb
+          - os: windows-latest
+            args: --win nsis portable
+          - os: macos-latest
+            args: --mac dmg
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build & publish
+        run: npx --no-install electron-builder ${{ matrix.args }} --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

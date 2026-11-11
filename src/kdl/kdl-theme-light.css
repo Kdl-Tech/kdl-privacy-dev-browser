@@ -1,0 +1,47 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   KDL Design System — thème CLAIR « Lagon » (défaut) — 25/09/2026
+   Mêmes valeurs que le site kdl-tech.fr (css/kdl.css) : écume, marine, lagon, soleil.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --kdl-bg:             #F3F7FA;
+  --kdl-bg-alt:         #E8EFF5;
+  --kdl-surface:        #FFFFFF;
+  --kdl-surface-soft:   #F6F9FB;
+  --kdl-surface-raised: #FFFFFF;
+  --kdl-surface-warm:   #FFF8E6;
+
+  --kdl-text:           #0A1622;
+  --kdl-text-secondary: #3E4A57;
+  --kdl-text-muted:     #5A6776;
+  --kdl-text-on-accent: #FFFFFF;
+  --kdl-title:          #123C63;
+
+  --kdl-border:      #DCE6EE;
+  --kdl-border-soft: #E8EFF5;
+
+  --kdl-accent:         #0A7475;
+  --kdl-accent-hover:   #085F60;
+  --kdl-accent-strong:  #123C63;
+  --kdl-accent-soft:    rgba(10, 116, 117, .10);
+  --kdl-focus:          #FFC845;
+  --kdl-sun:            #FFC845;
+  --kdl-navy:           #123C63;
+
+  --kdl-success:      #1B8A5A;
+  --kdl-success-soft: rgba(27, 138, 90, .12);
+  --kdl-warning:      #B54708;
+  --kdl-warning-soft: rgba(255, 200, 69, .22);
+  --kdl-danger:       #B42318;
+  --kdl-danger-soft:  rgba(180, 35, 24, .10);
+  --kdl-info:         #1B4C74;
+  --kdl-info-soft:    rgba(27, 76, 116, .10);
+
+  --kdl-shadow-sm: 0 2px 8px rgba(18, 60, 99, .07);
+  --kdl-shadow-md: 0 10px 26px -10px rgba(18, 60, 99, .22);
+  --kdl-shadow-lg: 0 30px 60px -30px rgba(18, 60, 99, .45);
+
+  --kdl-gradient: linear-gradient(135deg, #123C63, #0A7475);
+}

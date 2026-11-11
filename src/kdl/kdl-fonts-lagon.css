@@ -1,0 +1,7 @@
+/* Polices de la charte Lagon (fichiers dans ./fonts/, 100 % local) — à charger après kdl-tokens.css */
+@font-face{font-family:'Bricolage Grotesque';src:url('fonts/bricolage.woff2?v=2') format('woff2');font-weight:400 800;font-stretch:75% 100%;font-display:swap}
+@font-face{font-family:'Onest';src:url('fonts/onest.woff2?v=2') format('woff2');font-weight:400 700;font-display:swap}
+:root{
+  --kdl-font-display:'Bricolage Grotesque',system-ui,'Segoe UI',Roboto,sans-serif;
+  --kdl-font-body:'Onest',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}

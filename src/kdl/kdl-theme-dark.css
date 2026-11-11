@@ -1,0 +1,47 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   KDL Design System — thème SOMBRE « Lagon » — 25/09/2026
+   Mêmes valeurs que le thème sombre du site kdl-tech.fr (bleu nuit, lagon éclairci).
+   Clair par défaut : le sombre ne s'applique que sur choix explicite (data-theme="dark").
+   ═══════════════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --kdl-bg:             #0B1826;
+  --kdl-bg-alt:         #0F1F31;
+  --kdl-surface:        #12243A;
+  --kdl-surface-soft:   #0F2033;
+  --kdl-surface-raised: #183049;
+  --kdl-surface-warm:   #2A2414;
+
+  --kdl-text:           #E6EEF6;
+  --kdl-text-secondary: #AFC0D2;
+  --kdl-text-muted:     #8FA6BC;
+  --kdl-text-on-accent: #04282A;
+  --kdl-title:          #EEF4FA;
+
+  --kdl-border:      #23405E;
+  --kdl-border-soft: #1A3350;
+
+  --kdl-accent:         #3CC8C2;
+  --kdl-accent-hover:   #5ED6D1;
+  --kdl-accent-strong:  #7ADDD8;
+  --kdl-accent-soft:    rgba(60, 200, 194, .14);
+  --kdl-focus:          #FFC845;
+  --kdl-sun:            #FFC845;
+  --kdl-navy:           #123C63;
+
+  --kdl-success:      #4CC48C;
+  --kdl-success-soft: rgba(76, 196, 140, .16);
+  --kdl-warning:      #FFB45C;
+  --kdl-warning-soft: rgba(255, 180, 92, .16);
+  --kdl-danger:       #FF9B8F;
+  --kdl-danger-soft:  rgba(255, 155, 143, .14);
+  --kdl-info:         #8CC0EA;
+  --kdl-info-soft:    rgba(140, 192, 234, .14);
+
+  --kdl-shadow-sm: 0 3px 10px rgba(0, 0, 0, .35);
+  --kdl-shadow-md: 0 10px 26px -10px rgba(0, 0, 0, .6);
+  --kdl-shadow-lg: 0 30px 60px -30px rgba(0, 0, 0, .75);
+
+  --kdl-gradient: linear-gradient(135deg, #123C63, #0A7475);
+}
