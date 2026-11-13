@@ -15,7 +15,7 @@
     "dist:linux": "electron-builder --linux AppImage deb",
     "dist:win": "electron-builder --win nsis portable",
     "dist:mac": "electron-builder --mac dmg",
-    "test": "node test/privacy.test.js && node test/i18n.test.js"
+    "test": "node test/privacy.test.js && node test/i18n.test.js && node --test test/theme.test.js"
   },
   "devDependencies": {
     "electron": "^45.2.3",

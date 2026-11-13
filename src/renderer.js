@@ -26,10 +26,19 @@ function homeURL() {
 function isHome(url) { return !url || url.includes(HOME); }
 
 // ── Thème clair/sombre (KDL Design System) ────────────────────────────────
+// Sans choix mémorisé : thème du système (prefers-color-scheme), suivi en direct.
+const MQ_SOMBRE = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+function themeMemorise() {
+  try { const v = localStorage.getItem('kdl-theme'); return v === 'dark' || v === 'light' ? v : null; } catch (e) { return null; }
+}
+// Aligne nativeTheme.themeSource d'Electron (menus, barres, prefers-color-scheme des pages web).
+function syncThemeNatif() {
+  try { if (window.kdl && window.kdl.setThemeSource) window.kdl.setThemeSource(themeMemorise() || 'system').catch(() => {}); } catch (e) { /* */ }
+}
 function applyTheme(theme, persist) {
   theme = theme === 'dark' ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', theme);
-  if (persist) { try { localStorage.setItem('kdl-theme', theme); } catch (e) { /* */ } }
+  if (persist) { try { localStorage.setItem('kdl-theme', theme); } catch (e) { /* */ } syncThemeNatif(); }
   const btn = document.getElementById('btn-theme');
   if (btn) {
     btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
@@ -192,6 +201,10 @@ function renderTabs() {
 document.getElementById('newtab').onclick = () => createTab(HOME);
 const themeBtn = document.getElementById('btn-theme');
 if (themeBtn) { themeBtn.onclick = toggleTheme; applyTheme(curTheme(), false); }
+syncThemeNatif();
+if (MQ_SOMBRE) {
+  MQ_SOMBRE.addEventListener('change', () => { if (!themeMemorise()) applyTheme(MQ_SOMBRE.matches ? 'dark' : 'light', false); });
+}
 
 // --- Résolution requête : URL directe ou recherche DuckDuckGo ---
 function resolveQuery(raw) {

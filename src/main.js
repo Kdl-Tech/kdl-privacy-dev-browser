@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, session, ipcMain, shell, dialog, webContents } = require('electron');
+const { app, BrowserWindow, session, ipcMain, shell, dialog, webContents, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -48,6 +48,11 @@ if (!gotSingleInstanceLock) {
 
 // Langue de l'interface : langue du système par défaut, puis celle choisie dans le renderer.
 ipcMain.handle('kdl:set-lang', (_e, lang) => ({ lang: I18N.setLang(lang) }));
+// Thème : « system » tant que l'utilisateur n'a rien choisi, sinon son choix (light / dark).
+ipcMain.handle('kdl:theme-source', (_e, src) => {
+  nativeTheme.themeSource = ['light', 'dark'].includes(src) ? src : 'system';
+  return { themeSource: nativeTheme.themeSource };
+});
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -55,7 +60,7 @@ function createWindow() {
     height: 820,
     minWidth: 720,
     minHeight: 480,
-    backgroundColor: '#020817',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#020817' : '#F3F7FA',
     icon: path.join(__dirname, '..', 'assets', 'icon-256.png'),
     title: 'KDL Privacy Dev Browser',
     webPreferences: {

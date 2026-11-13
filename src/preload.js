@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('kdl', {
   openExternal: (url) => ipcRenderer.invoke('kdl:open-external', url),
   about: () => ipcRenderer.invoke('kdl:about'),
   setLang: (lang) => ipcRenderer.invoke('kdl:set-lang', lang),
+  setThemeSource: (src) => ipcRenderer.invoke('kdl:theme-source', src),
   exportFavs: (data) => ipcRenderer.invoke('kdl:export-favs', data),
   importFavs: () => ipcRenderer.invoke('kdl:import-favs'),
   saveText: (name, content) => ipcRenderer.invoke('kdl:save-text', { name, content }),
