@@ -314,7 +314,7 @@ small.muted { color: var(--muted); display: block; margin-top: 8px; line-height:
   background: var(--r-bg); color: var(--r-fg);
   animation: fadeIn .16s var(--ease);
 }
-.reader[data-theme="clair"] { --r-bg:#F7F8FA; --r-surf:#FFFFFF; --r-fg:#1A2230; --r-fg2:#5A6678; --r-line:rgba(0,0,0,.1); }
+.reader[data-theme="clair"] { --r-bg:#F2ECE1; --r-surf:#FBF8F1; --r-fg:#1F1B16; --r-fg2:#5A6678; --r-line:rgba(0,0,0,.1); }
 .reader[data-theme="sépia"] { --r-bg:#F4ECD8; --r-surf:#FBF5E6; --r-fg:#4A3B28; --r-fg2:#7A6A52; --r-line:rgba(74,59,40,.18); }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 

@@ -1,26 +1,26 @@
 /* ═══════════════════════════════════════════════════════════════════════
    KDL Design System — thème CLAIR « Lagon » (défaut) — 25/09/2026
-   Mêmes valeurs que le site kdl-tech.fr (css/kdl.css) : écume, marine, lagon, soleil.
+   Fonds chauds sable / crème (jamais de blanc pur) ; accents lagon, marine, soleil.
    ═══════════════════════════════════════════════════════════════════════ */
 :root,
 [data-theme="light"] {
   color-scheme: light;
 
-  --kdl-bg:             #F3F7FA;
-  --kdl-bg-alt:         #E8EFF5;
-  --kdl-surface:        #FFFFFF;
-  --kdl-surface-soft:   #F6F9FB;
-  --kdl-surface-raised: #FFFFFF;
+  --kdl-bg:             #F2ECE1;
+  --kdl-bg-alt:         #F8F3EA;
+  --kdl-surface:        #FBF8F1;
+  --kdl-surface-soft:   #F8F3EA;
+  --kdl-surface-raised: #FBF8F1;
   --kdl-surface-warm:   #FFF8E6;
 
-  --kdl-text:           #0A1622;
+  --kdl-text:           #1F1B16;
   --kdl-text-secondary: #3E4A57;
   --kdl-text-muted:     #5A6776;
   --kdl-text-on-accent: #FFFFFF;
   --kdl-title:          #123C63;
 
-  --kdl-border:      #DCE6EE;
-  --kdl-border-soft: #E8EFF5;
+  --kdl-border:      #E4DACA;
+  --kdl-border-soft: #ECE4D6;
 
   --kdl-accent:         #0A7475;
   --kdl-accent-hover:   #085F60;
@@ -30,7 +30,7 @@
   --kdl-sun:            #FFC845;
   --kdl-navy:           #123C63;
 
-  --kdl-success:      #1B8A5A;
+  --kdl-success:      #17784F;
   --kdl-success-soft: rgba(27, 138, 90, .12);
   --kdl-warning:      #B54708;
   --kdl-warning-soft: rgba(255, 200, 69, .22);

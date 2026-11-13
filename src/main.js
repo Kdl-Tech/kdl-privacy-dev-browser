@@ -60,7 +60,7 @@ function createWindow() {
     height: 820,
     minWidth: 720,
     minHeight: 480,
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#020817' : '#F3F7FA',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#020817' : '#F2ECE1',
     icon: path.join(__dirname, '..', 'assets', 'icon-256.png'),
     title: 'KDL Privacy Dev Browser',
     webPreferences: {
