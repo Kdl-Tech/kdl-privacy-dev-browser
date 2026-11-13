@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=KDL Privacy Dev Browser
-Comment=Navigateur léger, confidentiel et orienté développeur (KDL TECH, 1.5.0)
+Comment=Navigateur léger, confidentiel et orienté développeur (KDL TECH, 1.6.0)
 Exec=@APP_DIR@/packaging/launch.sh %u
 Path=@APP_DIR@
 Icon=@APP_DIR@/assets/icon-256.png

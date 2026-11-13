@@ -1,5 +1,10 @@
 # Changelog — KDL Privacy Dev Browser
 
+## 1.6.0 — 2026-11-13 — Modes clair et sombre
+- Le thème suit le mode clair / sombre du système tant qu’aucun choix manuel n’est mémorisé ;
+  le choix manuel reste prioritaire.
+- Thème clair repensé : fonds sable / crème au lieu du blanc pur.
+
 ## 1.5.0 — 2026-11-07 — Trilingue et nouvelle icône
 - Interface en français, anglais et espagnol (langue du système par défaut, réglage « Langue » mémorisé
   avec option Automatique) ; README en anglais et en espagnol.
