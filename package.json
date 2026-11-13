@@ -1,6 +1,6 @@
 {
   "name": "kdl-privacy-dev-browser",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "KDL Privacy Dev Browser — navigateur léger, privé et orienté développeur, avec IA locale facultative.",
   "main": "src/main.js",
   "author": "KDL-TECH",
@@ -15,7 +15,7 @@
     "dist:linux": "electron-builder --linux AppImage deb",
     "dist:win": "electron-builder --win nsis portable",
     "dist:mac": "electron-builder --mac dmg",
-    "test": "node test/privacy.test.js && node test/i18n.test.js && node --test test/theme.test.js"
+    "test": "node test/privacy.test.js && node test/i18n.test.js && node --test test/theme.test.js test/bookmarks.test.js"
   },
   "devDependencies": {
     "electron": "^45.2.3",

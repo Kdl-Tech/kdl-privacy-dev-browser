@@ -295,7 +295,7 @@ function renderFavsPanel(filter = '') {
     <input id="fav-search" class="input" type="text" placeholder="${tr('favs.search')}" value="${esc(filter)}" style="margin-bottom:10px" />
     <div id="fav-list">${list}</div>
     <button id="fav-export" class="btn-full">${tr('common.exportJson')}</button>
-    <button id="fav-import" class="btn-full">${tr('common.importJson')}</button>
+    <button id="fav-import" class="btn-full">${tr('favs.importBtn')}</button>
     <small class="muted">${tr('favs.note')}</small>
   `);
   const search = document.getElementById('fav-search');
@@ -310,7 +310,7 @@ function renderFavsPanel(filter = '') {
     el.onclick = () => editFav(+el.dataset.edit, filter);
   });
   document.getElementById('fav-export').onclick = exportFavs;
-  document.getElementById('fav-import').onclick = importFavs;
+  document.getElementById('fav-import').onclick = () => renderImportPanel();
 }
 
 function editFav(i, filter) {
@@ -340,21 +340,61 @@ async function exportFavs() {
   const res = await window.kdl.exportFavs(getFavs());
   toast(res.ok ? tr('favs.exported', { file: res.file }) : (res.canceled ? tr('common.exportCanceled') : tr('common.exportFailed')));
 }
-async function importFavs() {
-  const res = await window.kdl.importFavs();
+// Import : navigateurs détectés (Chrome, Edge, Brave, Opera, Vivaldi, Chromium, Firefox),
+// fichier HTML (format Netscape) ou JSON KDL. Lecture locale dans le processus principal ;
+// ici on ne fait qu'afficher et fusionner (http(s) seulement, sans doublon d'URL).
+function addImported(items, failed) {
+  const r = window.KDL_BOOKMARKS.mergeInto(getFavs(), items);
+  saveFavs(r.list); updateStar(cur() ? cur().getURL() : '');
+  renderFavsPanel();
+  toast(tr('imp.done', { n: r.added, skip: r.skipped }) + (failed ? ' ' + tr('imp.partial') : ''), 4200);
+}
+async function importFromFile(kind) {
+  const res = await window.kdl.importFavs(kind);
   if (!res.ok) return toast(res.canceled ? tr('favs.importCanceled') : tr('favs.importFailed', { error: res.error || tr('favs.invalidFile') }));
-  const incoming = Array.isArray(res.data) ? res.data : [];
-  const a = getFavs();
-  const seen = new Set(a.map((f) => f.url));
-  let added = 0;
-  for (const f of incoming) {
-    if (!f || typeof f.url !== 'string' || !/^[a-z]+:\/\//i.test(f.url)) continue;  // sécurité : URL valide
-    if (seen.has(f.url)) continue;                                                   // anti-doublon exact
-    let domain = ''; try { domain = new URL(f.url).hostname; } catch { /* */ }
-    a.push({ title: String(f.title || f.url).slice(0, 300), url: f.url, domain, added: Date.now() });
-    seen.add(f.url); added++;
-  }
-  saveFavs(a); renderFavsPanel(); toast(tr('favs.imported', { n: added }));
+  addImported(Array.isArray(res.data) ? res.data : [], 0);
+}
+async function renderImportPanel() {
+  const body = (sources, wait) => `
+    <div class="imp-head">${tr('imp.detected')}</div>
+    <div id="imp-list">${sources}</div>
+    <button id="imp-go" class="btn-full btn-accent" ${wait ? 'disabled' : ''}>${tr('imp.importSel')}</button>
+    <div class="imp-head">${tr('imp.fromFile')}</div>
+    <button id="imp-html" class="btn-full">${tr('imp.html')}</button>
+    <button id="imp-json" class="btn-full">${tr('imp.json')}</button>
+    <button id="imp-back" class="btn-full">${tr('common.back')}</button>
+    <small class="muted">${tr('imp.note')}</small>`;
+  showPanel(tr('imp.title'), body('<div class="empty">' + tr('imp.searching') + '</div>', true));
+  const wire = () => {
+    document.getElementById('imp-html').onclick = () => importFromFile('html');
+    document.getElementById('imp-json').onclick = () => importFromFile('json');
+    document.getElementById('imp-back').onclick = () => renderFavsPanel();
+  };
+  wire();
+  let found = [];
+  try { found = await window.kdl.bmDetect(); } catch { found = []; }
+  if (panel.classList.contains('hidden') || panelTitle.textContent !== tr('imp.title')) return; // panneau fermé ou changé
+  const rows = found.map((s) => {
+    const prof = !s.profile || s.profile === 'Default' ? tr('imp.defaultProfile') : s.profile;
+    const ok = !s.error && s.count > 0;
+    const info = s.error ? (s.error === 'firefox' ? tr('imp.errFirefox') : tr('imp.errRead')) : tr('imp.count', { n: s.count });
+    return `<label class="field imp-src${ok ? '' : ' is-off'}">
+      <input type="checkbox" data-src="${esc(s.id)}" ${ok ? 'checked' : 'disabled'}>
+      <span class="imp-name">${esc(s.browser)} <span class="muted">· ${esc(prof)}</span>
+        <small class="${s.error ? 'imp-err' : 'muted'}">${esc(info)}</small></span></label>`;
+  }).join('');
+  showPanel(tr('imp.title'), body(rows || '<div class="empty">' + tr('imp.none') + '</div>'));
+  wire();
+  const go = document.getElementById('imp-go');
+  if (!rows) go.disabled = true;
+  go.onclick = async () => {
+    const ids = [...document.querySelectorAll('#imp-list input[data-src]:checked')].map((el) => el.dataset.src);
+    if (!ids.length) return toast(tr('imp.noSel'));
+    go.disabled = true;
+    const res = await window.kdl.bmRead(ids);
+    if (!res || !res.ok) { go.disabled = false; return toast(tr('favs.importFailed', { error: tr('imp.errRead') })); }
+    addImported(res.data || [], res.failed || 0);
+  };
 }
 
 // --- DevTools ---

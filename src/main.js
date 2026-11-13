@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const { execFile } = require('child_process');
 const { isThirdParty, shouldBlock } = require('./privacy');
 const I18N = require('./i18n');
+const Bookmarks = require('./bookmarks-import');
 const tr = I18N.t;
 
 const isDev = process.argv.includes('--dev');
@@ -267,17 +268,41 @@ ipcMain.handle('kdl:export-favs', async (_e, data) => {
   catch (err) { return { ok: false, error: String(err) }; }
 });
 
-// Import favoris depuis un fichier JSON local (renvoie le tableau brut ; validation côté renderer).
-ipcMain.handle('kdl:import-favs', async () => {
+// Import favoris : fichier local choisi par l'utilisateur — JSON KDL ou HTML (format Netscape,
+// exporté par tous les navigateurs). Renvoie des favoris nettoyés ; fusion côté renderer.
+ipcMain.handle('kdl:import-favs', async (_e, kind) => {
+  const html = kind === 'html';
   const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
-    title: tr('dlg.importFavs'), properties: ['openFile'], filters: [{ name: 'JSON', extensions: ['json'] }]
+    title: tr('dlg.importFavs'), properties: ['openFile'],
+    filters: html ? [{ name: 'HTML', extensions: ['html', 'htm'] }] : [{ name: 'JSON', extensions: ['json'] }]
   });
   if (canceled || !filePaths || !filePaths[0]) return { ok: false, canceled: true };
-  try {
-    const data = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'));
-    if (!Array.isArray(data)) return { ok: false, error: tr('err.badFormat') };
-    return { ok: true, data };
-  } catch (err) { return { ok: false, error: String(err) }; }
+  try { return { ok: true, data: Bookmarks.readUserFile(filePaths[0], html ? 'html' : 'json') }; }
+  catch { return { ok: false, error: tr('favs.invalidFile') }; }
+});
+
+// Favoris des autres navigateurs installés (Chrome, Edge, Brave, Opera, Vivaldi, Chromium, Firefox).
+// Lecture 100 % locale ; les chemins restent ici, le renderer ne connaît que des identifiants.
+let bmSources = new Map();
+ipcMain.handle('kdl:bm-detect', async () => {
+  let found = [];
+  try { found = Bookmarks.detectSources(); } catch { found = []; }
+  bmSources = new Map(found.map((s) => [s.id, s]));
+  return found.map((s) => {
+    let count = 0; let error = '';
+    try { count = Bookmarks.readSource(s).length; }
+    catch (err) { error = s.kind === 'firefox' ? 'firefox' : 'read'; }
+    return { id: s.id, browserId: s.browserId, browser: s.browser, profile: s.profile, kind: s.kind, count, error };
+  });
+});
+ipcMain.handle('kdl:bm-read', async (_e, ids) => {
+  const items = []; let failed = 0;
+  for (const id of Array.isArray(ids) ? ids.slice(0, 64) : []) {
+    const s = bmSources.get(String(id));
+    if (!s) { failed++; continue; }
+    try { items.push(...Bookmarks.readSource(s)); } catch { failed++; }
+  }
+  return { ok: true, data: items, failed };
 });
 
 // Enregistrement local d'un texte (export Markdown du mode lecture, etc.).

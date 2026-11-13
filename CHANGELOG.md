@@ -1,5 +1,20 @@
 # Changelog — KDL Privacy Dev Browser
 
+## 1.7.0 — 2026-11-13 — Import des favoris des autres navigateurs
+- Nouveau panneau « Importer des favoris » (Favoris › Importer des favoris…) :
+  - détection automatique des navigateurs installés et de leurs profils sous Windows, macOS et Linux :
+    Google Chrome, Microsoft Edge, Brave, Opera, Opera GX, Vivaldi, Chromium (fichier `Bookmarks`)
+    et Mozilla Firefox (`places.sqlite`, lu sur une copie temporaire aussitôt effacée) ;
+    versions Snap et Flatpak prises en compte sous Linux ;
+  - fichier HTML de favoris (format Netscape, exporté par tous les navigateurs) ;
+  - fichier JSON KDL (comme avant).
+- Affiche navigateur, profil et nombre de favoris ; on coche ce qu'on veut importer.
+- Seules les adresses http(s) sont gardées, les doublons d'URL sont ignorés, les dossiers sont mis à plat.
+- Lecture 100 % locale, rien n'est envoyé sur Internet ; seuls les favoris sont lus (jamais les mots de
+  passe, cookies ou historiques). Aucune nouvelle dépendance : SQLite intégré à Electron (`node:sqlite`).
+- Textes en français, anglais et espagnol ; tests unitaires des parseurs (Chromium, HTML, Firefox,
+  dédoublonnage, détection des profils).
+
 ## 1.6.0 — 2026-11-13 — Modes clair et sombre
 - Le thème suit le mode clair / sombre du système tant qu’aucun choix manuel n’est mémorisé ;
   le choix manuel reste prioritaire.
