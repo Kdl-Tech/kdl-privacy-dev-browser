@@ -141,6 +141,7 @@ test('Détection : profils Chromium et Firefox sous Linux, Windows et macOS (arb
     // Linux
     put('.config/google-chrome/Default/Bookmarks', json);
     put('.config/google-chrome/Profile 2/Bookmarks', json);
+    put('.config/google-chrome/Profile 2/AccountBookmarks', json);    // favoris du compte Google
     put('.config/google-chrome/Guest Profile/Bookmarks', json);         // ignoré
     put('.config/google-chrome/Default/Login Data', 'secret');           // jamais lu
     put('.config/BraveSoftware/Brave-Browser/Default/Bookmarks', json);
@@ -149,7 +150,7 @@ test('Détection : profils Chromium et Firefox sous Linux, Windows et macOS (arb
     put('.mozilla/firefox/abcd.default-release/places.sqlite', 'x');
     const lin = Imp.detectSources({ platform: 'linux', env: {}, home });
     const lab = lin.map((s) => `${s.browserId}|${s.profile}`).sort();
-    assert.deepEqual(lab, ['brave|Default', 'chrome|Default', 'chrome|Profile 2', 'firefox|default-release', 'opera|']);
+    assert.deepEqual(lab, ['brave|Default', 'chrome|Default', 'chrome|Profile 2', 'chrome|Profile 2 (compte)', 'firefox|default-release', 'opera|']);
     assert.ok(lin.every((s) => /^[0-9a-f]{16}$/.test(s.id)));
     assert.equal(new Set(lin.map((s) => s.id)).size, lin.length);
     const one = lin.find((s) => s.browserId === 'chrome');

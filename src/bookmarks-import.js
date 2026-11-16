@@ -2,7 +2,7 @@
 /**
  * KDL Privacy Dev Browser — détection et lecture LOCALE des favoris des autres navigateurs.
  * Processus principal uniquement. Aucun accès réseau.
- * Fichiers lus : « Bookmarks » (Chromium) et « places.sqlite » (Firefox, lu sur une copie temporaire),
+ * Fichiers lus : « Bookmarks » et « AccountBookmarks » (Chromium) et « places.sqlite » (Firefox, lu sur une copie temporaire),
  * plus « profiles.ini » de Firefox pour trouver les profils. Jamais : mots de passe, cookies,
  * historique, « Local State », « Login Data », etc. Pour Firefox, seules les lignes de moz_places
  * reliées à un favori (moz_bookmarks) sont lues.
@@ -84,11 +84,17 @@ function chromiumDirs(b, platform, home) {
 // Profils Chromium : le dossier lui-même (Opera) puis Default, Profile N… (on ignore Guest/System).
 function chromiumProfiles(root) {
   const res = [];
-  if (isFile(path.join(root, 'Bookmarks'))) res.push({ profile: '', file: path.join(root, 'Bookmarks') });
+  // « AccountBookmarks » : favoris du compte Google synchronisé (Chrome récent les range à part de « Bookmarks »).
+  const ajouter = (dir, profile) => {
+    for (const [nom, suffixe] of [['Bookmarks', ''], ['AccountBookmarks', ' (compte)']]) {
+      const f = path.join(dir, nom);
+      if (isFile(f)) res.push({ profile: (profile + suffixe).trim(), file: f });
+    }
+  };
+  ajouter(root, '');
   for (const d of listDir(root).sort()) {
     if (!(d === 'Default' || /^Profile \d+$/.test(d) || /^_side_profile_\d+$/.test(d))) continue;
-    const f = path.join(root, d, 'Bookmarks');
-    if (isFile(f)) res.push({ profile: d, file: f });
+    ajouter(path.join(root, d), d);
   }
   return res;
 }
