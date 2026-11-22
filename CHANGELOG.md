@@ -1,5 +1,12 @@
 # Changelog — KDL Privacy Dev Browser
 
+## 1.8.0 — en préparation (22/11/2026) — Style F KDL TECH
+- Nouvelle apparence, la même que kdl-tech.fr : verre sombre sur lueurs colorées, titres Barlow Semi Condensed,
+  texte Source Sans 3 (polices locales, licence OFL), action principale en bouton doré.
+- Barres d'onglets et de navigation en verre, barre d'adresse mise en avant, menus et panneaux en verre dense.
+- Page d'accueil refaite : lueurs animées (coupées si « réduire les animations »), recherche en verre, raccourcis en pastilles.
+- Thèmes clair et sombre retravaillés tous les deux ; fond de fenêtre au démarrage aligné.
+
 ## 1.7.0 — 2026-11-13 — Import des favoris des autres navigateurs
 - Nouveau panneau « Importer des favoris » (Favoris › Importer des favoris…) :
   - détection automatique des navigateurs installés et de leurs profils sous Windows, macOS et Linux :

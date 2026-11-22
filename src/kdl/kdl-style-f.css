@@ -1,0 +1,211 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   KDL TECH — style F « verre sombre » (22/11/2026), même charte que kdl-tech.fr.
+   Couche chargée EN DERNIER : redéfinit les jetons --kdl-* (sombre / clair),
+   pose le verre sur les barres, menus et panneaux, les lueurs colorées en fond,
+   les polices Barlow Semi Condensed (titres) + Source Sans 3 (texte), boutons dorés.
+   Verre « prononcé mais pas trop » : flou 22px, voile translucide, reflet en haut.
+   Polices : SIL Open Font License 1.1 (voir fonts/OFL-Barlow.txt et fonts/OFL-SourceSans3.md). 100 % local.
+   ═══════════════════════════════════════════════════════════════════════ */
+@font-face{font-family:"Barlow Semi Condensed";font-weight:600;font-display:swap;src:url("fonts/barlow-sc-600-latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Barlow Semi Condensed";font-weight:600;font-display:swap;src:url("fonts/barlow-sc-600-latin-ext.woff2") format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Barlow Semi Condensed";font-weight:700;font-display:swap;src:url("fonts/barlow-sc-700-latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Barlow Semi Condensed";font-weight:700;font-display:swap;src:url("fonts/barlow-sc-700-latin-ext.woff2") format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Source Sans 3";font-weight:400 700;font-display:swap;src:url("fonts/source-sans3-400-700-latin.woff2") format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Source Sans 3";font-weight:400 700;font-display:swap;src:url("fonts/source-sans3-400-700-latin-ext.woff2") format("woff2");unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+
+/* ── Jetons F — SOMBRE (référence) ───────────────────────────────────── */
+:root, [data-theme="dark"] {
+  --f-display: "Barlow Semi Condensed", system-ui, "Segoe UI", sans-serif;
+  --f-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-paper: #08121d;
+  --f-ink: #F3F6FA; --f-ink-2: rgba(243,246,250,.80); --f-ink-3: rgba(243,246,250,.64);
+  --f-accent: #19B3A6; --f-accent-txt: #4FD6C9; --f-focus: #E8C77A; --f-on-gold: #1b1406;
+  --f-halo-1: rgba(31,82,120,.95); --f-halo-2: rgba(25,179,166,.75); --f-halo-3: rgba(232,199,122,.40); --f-halo-4: rgba(240,138,108,.32);
+  --f-lueur-op: .55;
+  --f-glass: rgba(255,255,255,.075); --f-glass-strong: rgba(255,255,255,.11); --f-glass-hover: rgba(255,255,255,.17);
+  --f-glass-edge: rgba(255,255,255,.22); --f-line: rgba(255,255,255,.12);
+  --f-glass-solid: rgba(14,26,40,.86);   /* panneaux posés sur une page web : lisibles même sans flou */
+  --f-shine: inset 0 1px 0 rgba(255,255,255,.34);
+  --f-shadow: 0 24px 60px rgba(2,8,16,.50), 0 2px 6px rgba(2,8,16,.30);
+  --f-gold: linear-gradient(180deg,#F3D98F,#DDB65A);
+  --f-gold-glow: 0 8px 22px rgba(232,199,122,.30), inset 0 1px 0 rgba(255,255,255,.6);
+  --f-gold-glow-h: 0 12px 28px rgba(232,199,122,.45), inset 0 1px 0 rgba(255,255,255,.6);
+  --f-logo-filter: drop-shadow(0 0 10px rgba(140,190,240,.35));
+}
+[data-theme="dark"] {
+  --kdl-bg: #08121d; --kdl-bg-alt: #0b1724;
+  --kdl-surface: #0f1c2b; --kdl-surface-soft: #0d1926; --kdl-surface-raised: #162638; --kdl-surface-warm: #2A2414;
+  --kdl-text: #F3F6FA; --kdl-text-secondary: rgba(243,246,250,.80); --kdl-text-muted: rgba(243,246,250,.64);
+  --kdl-text-on-accent: #1b1406; --kdl-title: #F3F6FA;
+  --kdl-border: rgba(255,255,255,.18); --kdl-border-soft: rgba(255,255,255,.11);
+  --kdl-accent: #4FD6C9; --kdl-accent-hover: #6FE0D5; --kdl-accent-strong: #8FE8DF; --kdl-accent-soft: rgba(25,179,166,.18);
+  --kdl-focus: #E8C77A; --kdl-sun: #E8C77A;
+  --kdl-shadow-sm: 0 3px 10px rgba(2,8,16,.40);
+  --kdl-shadow-md: 0 24px 60px rgba(2,8,16,.50), 0 2px 6px rgba(2,8,16,.30);
+  --kdl-shadow-lg: 0 32px 70px rgba(2,8,16,.60), 0 2px 6px rgba(2,8,16,.30);
+  /* Kit Lagon (encart promo) */
+  --ecume: #0b1724; --surf: #0f1c2b; --encre: #F3F6FA; --texte: #F3F6FA; --gris: rgba(243,246,250,.70);
+  --ligne: rgba(255,255,255,.14); --lagon: #4FD6C9; --soleil: #E8C77A;
+}
+
+/* ── Jetons F — CLAIR ────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --f-paper: #EEF0EC;
+  --f-ink: #0E1C2A; --f-ink-2: rgba(14,28,42,.80); --f-ink-3: rgba(14,28,42,.66);
+  --f-accent: #0B7A70; --f-accent-txt: #0A6F66; --f-focus: #1F5278;
+  --f-halo-1: rgba(74,155,214,.40); --f-halo-2: rgba(25,179,166,.38); --f-halo-3: rgba(232,199,122,.45); --f-halo-4: rgba(240,138,108,.30);
+  --f-lueur-op: .9;
+  --f-glass: rgba(255,255,255,.55); --f-glass-strong: rgba(255,255,255,.70); --f-glass-hover: rgba(255,255,255,.90);
+  --f-glass-edge: rgba(255,255,255,.85); --f-line: rgba(14,28,42,.12);
+  --f-glass-solid: rgba(248,249,246,.93);
+  --f-shine: inset 0 1px 0 rgba(255,255,255,.95);
+  --f-shadow: 0 20px 50px rgba(31,82,120,.16), 0 2px 6px rgba(31,82,120,.10);
+  --f-logo-filter: none;
+
+  --kdl-bg: #EEF0EC; --kdl-bg-alt: #E7EAE4;
+  --kdl-surface: #F8F9F6; --kdl-surface-soft: #EDF0EA; --kdl-surface-raised: #FFFFFF;
+  --kdl-text: #0E1C2A; --kdl-text-secondary: rgba(14,28,42,.80); --kdl-text-muted: rgba(14,28,42,.66);
+  --kdl-text-on-accent: #1b1406; --kdl-title: #0E1C2A;
+  --kdl-border: rgba(14,28,42,.18); --kdl-border-soft: rgba(14,28,42,.10);
+  --kdl-accent: #0B7A70; --kdl-accent-hover: #0A6F66; --kdl-accent-strong: #085F57; --kdl-accent-soft: rgba(11,122,112,.13);
+  --kdl-focus: #1F5278; --kdl-sun: #DDB65A;
+  --kdl-shadow-sm: 0 3px 10px rgba(31,82,120,.12);
+  --kdl-shadow-md: 0 20px 50px rgba(31,82,120,.16), 0 2px 6px rgba(31,82,120,.10);
+  --kdl-shadow-lg: 0 28px 60px rgba(31,82,120,.22), 0 2px 6px rgba(31,82,120,.12);
+  --ecume: #E7EAE4; --surf: #F8F9F6; --encre: #0E1C2A; --texte: #0E1C2A; --gris: rgba(14,28,42,.70);
+  --ligne: rgba(14,28,42,.12); --lagon: #0B7A70; --soleil: #DDB65A;
+}
+
+/* ── Fond : papier + 4 lueurs colorées (visibles derrière le verre des barres) ── */
+html, body {
+  font-family: var(--f-body);
+  font-size: 13.5px;
+  background-color: var(--f-paper);
+}
+body {
+  background-image:
+    radial-gradient(38vmax 30vmax at 6% -60%,  var(--f-halo-1), transparent 70%),
+    radial-gradient(34vmax 26vmax at 52% -70%, var(--f-halo-2), transparent 70%),
+    radial-gradient(30vmax 24vmax at 96% -40%, var(--f-halo-3), transparent 70%),
+    radial-gradient(40vmax 30vmax at 80% 120%, var(--f-halo-4), transparent 70%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+#viewport { background: transparent; }
+
+/* ── Barre d'onglets : verre léger, onglet actif = pastille de verre ─────── */
+#tabbar {
+  background: linear-gradient(180deg, var(--f-glass), transparent);
+  padding: 8px 10px 0;
+  gap: 6px;
+}
+#brand-logo { width: 24px; height: 24px; filter: var(--f-logo-filter); margin: 0 10px 6px 4px; }
+.tab {
+  height: 34px; border-radius: 12px 12px 0 0; color: var(--f-ink-3);
+  font-family: var(--f-body);
+}
+.tab-label { font-size: 12.5px; font-weight: 500; }
+.tab:hover { background: var(--f-glass); color: var(--f-ink-2); }
+.tab.active {
+  background: var(--f-glass-strong);
+  border-color: var(--f-glass-edge);
+  color: var(--f-ink);
+  box-shadow: var(--f-shine), inset 0 -2px 0 var(--f-accent);
+  -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
+}
+.tab-close:hover { background: rgba(240,138,108,.9); color: #1b1406; }
+
+/* ── Barre de navigation : bande de verre ─────────────────────────────── */
+#toolbar {
+  gap: 10px; padding: 8px 12px;
+  background: var(--f-glass-strong);
+  border-top: 1px solid var(--f-glass-edge);
+  border-bottom: 1px solid var(--f-line);
+  box-shadow: var(--f-shine), 0 10px 24px -18px rgba(2,8,16,.6);
+  -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
+  position: relative; z-index: 20;
+}
+.ico-btn { height: 34px; min-width: 34px; border-radius: 10px; color: var(--f-ink-2); }
+.ico-btn:hover { background: var(--f-glass-hover); border-color: var(--f-glass-edge); color: var(--f-ink); }
+.ico-btn:disabled:hover { color: var(--f-ink-2); }
+
+/* Barre d'adresse = point focal de la barre */
+#urlform {
+  height: 38px; border-radius: 14px;
+  background: var(--f-glass);
+  border: 1px solid var(--f-glass-edge);
+  box-shadow: var(--f-shine);
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+#urlform:hover { background: var(--f-glass-strong); }
+#urlform:focus-within {
+  background: var(--f-glass-strong);
+  border-color: var(--f-focus);
+  box-shadow: var(--f-shine), 0 0 0 3px color-mix(in srgb, var(--f-focus) 28%, transparent);
+}
+#urlbar { color: var(--f-ink); font-family: var(--f-body); font-size: 14px; }
+#urlbar::placeholder { color: var(--f-ink-3); }
+
+/* ── Menus, panneaux, toasts : verre plus dense (posé sur une page web) ── */
+.menu, .panel, .toast {
+  background: var(--f-glass-solid);
+  border: 1px solid var(--f-glass-edge);
+  box-shadow: var(--f-shine), var(--f-shadow);
+  -webkit-backdrop-filter: blur(26px) saturate(180%); backdrop-filter: blur(26px) saturate(180%);
+}
+.menu { border-radius: 16px; padding: 8px; }
+.menu-item { border-radius: 10px; color: var(--f-ink-2); font-family: var(--f-body); font-size: 13.5px; }
+.menu-item svg { color: var(--f-accent-txt); }
+.menu-item:hover { background: var(--f-glass-hover); color: var(--f-ink); }
+.menu-sep { background: var(--f-line); }
+
+.panel { border-width: 0 0 0 1px; border-radius: 22px 0 0 22px; }
+#panel-backdrop { background: rgba(2,8,16,.45); }
+.panel-head {
+  font-family: var(--f-display); font-weight: 700; font-size: 18px; letter-spacing: .01em;
+  color: var(--f-ink); border-bottom: 1px solid var(--f-line);
+}
+.toast { color: var(--f-ink); border-radius: 14px; }
+
+/* Titres internes des panneaux */
+.panel h3, .panel h4, .panel-body h3, #panel-body h3, #panel-body h4 {
+  font-family: var(--f-display); font-weight: 600; color: var(--f-ink); letter-spacing: .01em;
+}
+
+/* Champs et lignes */
+.input {
+  background: var(--f-glass); border: 1px solid var(--f-glass-edge); border-radius: 12px;
+  color: var(--f-ink); font-family: var(--f-body);
+}
+.input:focus { border-color: var(--f-focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--f-focus) 28%, transparent); }
+.row { border-bottom-color: var(--f-line); }
+.row button, .btn-full, #responsive-bar button {
+  background: var(--f-glass-strong); border: 1px solid var(--f-glass-edge); color: var(--f-ink);
+  box-shadow: var(--f-shine); border-radius: 10px;
+}
+.row button:hover, .btn-full:hover, #responsive-bar button:hover { background: var(--f-glass-hover); color: var(--f-ink); border-color: var(--f-glass-edge); }
+#responsive-bar { background: var(--f-glass); border-bottom: 1px solid var(--f-line); color: var(--f-ink-3); }
+#responsive-bar button.active { border-color: var(--f-accent); background: color-mix(in srgb, var(--f-accent) 18%, transparent); }
+
+/* Action principale = bouton doré (une seule par vue) */
+.btn-accent, .btn-accent:hover {
+  background: var(--f-gold); color: var(--f-on-gold); border: 1px solid transparent;
+  box-shadow: var(--f-gold-glow); font-weight: 700; filter: none;
+}
+.btn-accent:hover { box-shadow: var(--f-gold-glow-h); transform: translateY(-1px); }
+.btn-accent:active { transform: none; }
+
+.empty { background: var(--f-glass); border: 1px dashed var(--f-glass-edge); border-radius: 18px; color: var(--f-ink-2); }
+.notice { background: var(--f-glass); border-radius: 12px; }
+
+/* Focus clavier : or (sombre) / bleu (clair), toujours visible */
+:focus-visible { outline: 2px solid var(--f-focus); outline-offset: 2px; }
+
+/* Barres de défilement discrètes */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--f-glass-hover); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-accent:hover { transform: none; }
+}
