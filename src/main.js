@@ -29,7 +29,12 @@ const DL_DIR = path.join(app.getPath('desktop'), 'kdl-telechargements');
 // --- Confidentialité : pas de télémétrie, blocage cookies tiers optionnel ---
 app.setPath('userData', path.join(app.getPath('userData')));
 
-let mainWindow = null;
+let mainWindow = null;            // dernière fenêtre normale active (dialogues, messages)
+let privSeq = 0;                  // numéro des fenêtres de navigation privée
+let setupBrowseSession = () => {}; // défini au démarrage : protections communes à toute session de navigation
+const allWins = () => BrowserWindow.getAllWindows().filter((w) => !w.isDestroyed());
+const dlgParent = () => BrowserWindow.getFocusedWindow() || mainWindow || undefined;
+function broadcast(ch, data) { for (const w of allWins()) w.webContents.send(ch, data); }
 
 // Protocole local (deep-link) : permet à un lanceur d'ouvrir l'app sur sa home locale,
 // sans jamais ouvrir GitHub. Sur les postes où il n'est pas enregistré, le lien est sans effet.
@@ -55,15 +60,20 @@ ipcMain.handle('kdl:theme-source', (_e, src) => {
   return { themeSource: nativeTheme.themeSource };
 });
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
+function createWindow(opts = {}) {
+  const priv = !!opts.private;
+  // Fenêtre privée : session en mémoire propre à la fenêtre (rien n'est écrit sur le disque),
+  // effacée à sa fermeture. Fenêtre normale : session persistante habituelle.
+  const part = priv ? 'kdl-private-' + (++privSeq) : PARTITION;
+  if (priv) setupBrowseSession(session.fromPartition(part));
+  const win = new BrowserWindow({
     width: 1280,
     height: 820,
     minWidth: 720,
     minHeight: 480,
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#08121d' : '#EEF0EC',
     icon: path.join(__dirname, '..', 'assets', 'icon-256.png'),
-    title: 'KDL Privacy Dev Browser',
+    title: priv ? 'KDL Privacy Dev Browser — privé' : 'KDL Privacy Dev Browser',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -75,25 +85,31 @@ function createWindow() {
   });
 
   // Durcissement <webview> : aucune page ne reçoit de preload ni de Node, partition imposée.
-  mainWindow.webContents.on('will-attach-webview', (_e, wp, params) => {
+  if (!priv || !mainWindow) mainWindow = win;
+  win.on('focus', () => { if (!priv) mainWindow = win; });
+  win.webContents.on('will-attach-webview', (_e, wp, params) => {
     delete wp.preload; delete wp.preloadURL;
     wp.nodeIntegration = false; wp.nodeIntegrationInSubFrames = false;
     wp.contextIsolation = true; wp.sandbox = true; wp.webSecurity = true;
-    params.partition = PARTITION;
+    params.partition = part;
   });
 
-  mainWindow.removeMenu();
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  win.removeMenu();
+  win.loadFile(path.join(__dirname, 'index.html'), priv ? { query: { private: '1' } } : undefined);
 
-  if (isDev) mainWindow.webContents.openDevTools({ mode: 'detach' });
+  if (isDev) win.webContents.openDevTools({ mode: 'detach' });
 
   // Toute fenêtre/onglet externe demandé par l'UI -> navigateur système, jamais une fenêtre Electron sans contrôle.
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+  win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
 
-  mainWindow.on('closed', () => { mainWindow = null; });
+  win.on('closed', () => {
+    if (priv) session.fromPartition(part).clearStorageData().catch(() => {});
+    if (mainWindow === win) mainWindow = allWins().find((w) => w !== win) || null;
+  });
+  return win;
 }
 
 // Mettre la fenêtre au premier plan sur la home (réutilisé par le protocole / 2e instance).
@@ -155,19 +171,22 @@ app.whenReady().then(() => {
     cb(decision === 'allow');            // défaut (null) = refus
   };
   session.defaultSession.setPermissionRequestHandler(handler);
-  browseSession().setPermissionRequestHandler(handler);
-  installCookieFilter(browseSession());
-  installTrackerBlocker(browseSession());
-
-  // Téléchargements : gestionnaire dédié (dossier dédié, aucune exécution/ouverture auto).
-  browseSession().on('will-download', (e, item, wc) => {
-    if (tdlShouldTake(item.getURL())) {          // confié à TurboDL (repli local si absent)
-      e.preventDefault();
-      tdlTakeOver(item.getURL(), wc && !wc.isDestroyed() ? wc.getURL() : '');
-      return;
-    }
-    startDownload(item);
-  });
+  // Mêmes protections pour toute session de navigation (normale et fenêtres privées).
+  setupBrowseSession = (ses) => {
+    ses.setPermissionRequestHandler(handler);
+    installCookieFilter(ses);
+    installTrackerBlocker(ses);
+    // Téléchargements : gestionnaire dédié (dossier dédié, aucune exécution/ouverture auto).
+    ses.on('will-download', (e, item, wc) => {
+      if (tdlShouldTake(item.getURL())) {          // confié à TurboDL (repli local si absent)
+        e.preventDefault();
+        tdlTakeOver(item.getURL(), wc && !wc.isDestroyed() ? wc.getURL() : '');
+        return;
+      }
+      startDownload(item);
+    });
+  };
+  setupBrowseSession(browseSession());
 
   // Liens magnet cliqués dans une page : envoyés à TurboDL.
   app.on('web-contents-created', (_e, wc) => {
@@ -176,8 +195,25 @@ app.whenReady().then(() => {
     wc.setWebRTCIPHandlingPolicy('default_public_interface_only');
     // window.open / target=_blank : nouvel onglet contrôlé, jamais de fenêtre Electron libre.
     wc.setWindowOpenHandler(({ url }) => {
-      if (/^https?:/i.test(url) && mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('kdl:open-tab', url);
+      // Nouvel onglet dans la fenêtre qui contient la page (et donc dans sa session).
+      const host = wc.hostWebContents;
+      if (/^https?:/i.test(url) && host && !host.isDestroyed()) host.send('kdl:open-tab', url);
       return { action: 'deny' };
+    });
+    // Raccourcis du navigateur quand la page web a le focus (Ctrl+T, Ctrl+F, Ctrl+H, F11…) :
+    // relayés à la fenêtre. Copier/coller, annuler, tout sélectionner restent à la page.
+    wc.on('before-input-event', (ev, input) => {
+      if (input.type !== 'keyDown') return;
+      const k = String(input.key || '').toLowerCase();
+      const c = input.control || input.meta;
+      const hit = (c && !input.alt && ['t', 'w', 'n', 'h', 'f', 'p', 's', 'u', 'd', 'j', 'l', 'r', 'q', 'tab', '+', '=', '-', '0'].includes(k))
+        || (c && input.shift && ['t', 'n', 'b', 'o', 'i', 'm'].includes(k))
+        || ['f11', 'f12', 'f5'].includes(k)
+        || (input.alt && !c && (k === 'arrowleft' || k === 'arrowright'));
+      const host = wc.hostWebContents;
+      if (!hit || !host || host.isDestroyed()) return;
+      ev.preventDefault();
+      host.send('kdl:shortcut', { key: input.key, control: input.control, meta: input.meta, shift: input.shift, alt: input.alt });
     });
     wc.on('will-navigate', (ev, url) => {
       if (/^magnet:/i.test(url)) { ev.preventDefault(); tdlSend(url, wc.getURL()).then((r) => tdlNotify(r, url)); }
@@ -254,11 +290,31 @@ ipcMain.handle('kdl:open-external', (_e, url) => {
 });
 
 // Métadonnées « À propos ».
+// Fenêtres, plein écran, quitter, enregistrer la page (menu « comme Chrome »).
+ipcMain.handle('kdl:new-window', (_e, priv) => { createWindow({ private: !!priv }); return { ok: true }; });
+ipcMain.handle('kdl:fullscreen', (e) => {
+  const w = BrowserWindow.fromWebContents(e.sender); if (!w) return { ok: false };
+  w.setFullScreen(!w.isFullScreen()); return { ok: true, on: w.isFullScreen() };
+});
+ipcMain.handle('kdl:quit', () => { app.quit(); return { ok: true }; });
+ipcMain.handle('kdl:save-page', async (e, wcId) => {
+  const wc = webContents.fromId(Number(wcId));
+  if (!wc || wc.isDestroyed() || wc.getType() !== 'webview' || wc.hostWebContents !== e.sender) return { ok: false };
+  const base = (wc.getTitle() || 'page').replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || 'page';
+  const { canceled, filePath } = await dialog.showSaveDialog(BrowserWindow.fromWebContents(e.sender) || dlgParent(), {
+    defaultPath: path.join(app.getPath('downloads'), base + '.html'),
+    filters: [{ name: 'HTML', extensions: ['html', 'htm'] }]
+  });
+  if (canceled || !filePath) return { ok: false, canceled: true };
+  try { await wc.savePage(filePath, 'HTMLComplete'); return { ok: true, file: filePath }; }
+  catch (err) { return { ok: false, error: String(err && err.message || err) }; }
+});
+
 ipcMain.handle('kdl:about', () => ({ name: 'KDL Privacy Dev Browser', version: app.getVersion() }));
 
 // Export favoris -> fichier JSON local (aucun cloud).
 ipcMain.handle('kdl:export-favs', async (_e, data) => {
-  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+  const { canceled, filePath } = await dialog.showSaveDialog(dlgParent(), {
     title: tr('dlg.exportFavs'),
     defaultPath: path.join(app.getPath('desktop'), 'kdl-favoris.json'),
     filters: [{ name: 'JSON', extensions: ['json'] }]
@@ -272,7 +328,7 @@ ipcMain.handle('kdl:export-favs', async (_e, data) => {
 // exporté par tous les navigateurs). Renvoie des favoris nettoyés ; fusion côté renderer.
 ipcMain.handle('kdl:import-favs', async (_e, kind) => {
   const html = kind === 'html';
-  const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+  const { canceled, filePaths } = await dialog.showOpenDialog(dlgParent(), {
     title: tr('dlg.importFavs'), properties: ['openFile'],
     filters: html ? [{ name: 'HTML', extensions: ['html', 'htm'] }] : [{ name: 'JSON', extensions: ['json'] }]
   });
@@ -310,7 +366,7 @@ ipcMain.handle('kdl:bm-read', async (_e, ids) => {
 ipcMain.handle('kdl:save-text', async (_e, { name, content } = {}) => {
   if (typeof content !== 'string') return { ok: false, error: tr('err.badContent') };
   const safe = (name || 'kdl-export.txt').replace(/[^\w.\- ]+/g, '_').slice(0, 120);
-  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+  const { canceled, filePath } = await dialog.showSaveDialog(dlgParent(), {
     title: tr('common.save'), defaultPath: path.join(app.getPath('desktop'), safe),
   });
   if (canceled || !filePath) return { ok: false, canceled: true };
@@ -551,7 +607,7 @@ function loadDlHistory() {
   return dlHistory;
 }
 function saveDlHistory() { try { fs.writeFileSync(DL_HISTORY_FILE(), JSON.stringify(dlHistory.slice(0, 200))); } catch { /* */ } }
-function dlEmit(rec) { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('kdl:dl-update', rec); }
+function dlEmit(rec) { broadcast('kdl:dl-update', rec); }
 function uniquePath(dir, name) {
   let p = path.join(dir, name); if (!fs.existsSync(p)) return p;
   const ext = path.extname(name), base = path.basename(name, ext);
@@ -757,7 +813,7 @@ async function tdlSend(url, referrer) {
 }
 
 function tdlNotify(r, url) {
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('kdl:tdl-event', { ok: !!r.ok, error: r.error || '', name: r.name || '', url });
+  if (allWins().length) broadcast('kdl:tdl-event', { ok: !!r.ok, error: r.error || '', name: r.name || '', url });
 }
 
 function tdlShouldTake(url) {

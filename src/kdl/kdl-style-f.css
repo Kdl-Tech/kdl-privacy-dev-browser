@@ -209,3 +209,107 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .btn-accent:hover { transform: none; }
 }
+
+/* ═══ 1.8.0 — fonctions « comme Chrome » ═══════════════════════════════ */
+
+/* Barre de favoris : fine bande de verre sous la barre de navigation */
+#favbar {
+  display: flex; align-items: center; gap: 4px; min-height: 34px; padding: 3px 10px;
+  background: var(--f-glass); border-bottom: 1px solid var(--f-line);
+  -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
+  overflow: hidden; white-space: nowrap; position: relative; z-index: 19;
+}
+#favbar.hidden { display: none; }
+.fb-item {
+  display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; max-width: 190px; height: 28px; padding: 0 10px;
+  border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--f-ink-2);
+  font: 500 12.5px/1 var(--f-body); cursor: pointer; transition: background-color .15s ease, color .15s ease;
+}
+.fb-item span { overflow: hidden; text-overflow: ellipsis; }
+.fb-item:hover, .fb-more:hover { background: var(--f-glass-hover); border-color: var(--f-glass-edge); color: var(--f-ink); }
+.fb-item.fb-off { display: none; }
+.fb-item img, .fb-item svg, .fb-row img { width: 16px; height: 16px; flex-shrink: 0; border-radius: 4px; object-fit: contain; }
+.fb-item svg { fill: none; stroke: var(--f-ink-3); stroke-width: 1.6; }
+.fb-mono {
+  display: inline-grid; place-items: center; width: 16px; height: 16px; flex-shrink: 0; border-radius: 5px;
+  background: color-mix(in srgb, var(--f-accent) 28%, transparent); color: var(--f-ink); font: 700 10px/1 var(--f-body);
+}
+.fb-more {
+  margin-left: auto; flex-shrink: 0; display: inline-grid; place-items: center; width: 30px; height: 28px;
+  border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--f-ink-2); cursor: pointer;
+}
+.fb-more svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fb-more.hidden { display: none; }
+.fb-empty { color: var(--f-ink-3); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+.fb-link { margin-left: 8px; border: 0; background: none; color: var(--f-accent-txt); font: 600 12.5px/1 var(--f-body); cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+.fb-link:hover { text-decoration: underline; }
+.fb-row { display: flex; align-items: center; gap: 10px; text-align: left; flex: 1; cursor: pointer; }
+
+/* Menu : raccourcis à droite, zoom en ligne, hauteur limitée */
+.menu { max-height: calc(100vh - 110px); overflow-y: auto; min-width: 300px; }
+.menu-item kbd {
+  margin-left: auto; padding-left: 14px; font: 500 11.5px/1 var(--f-body); color: var(--f-ink-3);
+  background: none; border: 0; letter-spacing: .02em;
+}
+.menu-item[aria-checked="true"] svg { color: var(--f-accent-txt); }
+.menu-item[aria-checked="true"]::after {
+  content: ""; width: 7px; height: 7px; border-radius: 50%; margin-left: 10px; flex-shrink: 0;
+  background: var(--f-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--f-accent) 25%, transparent);
+}
+.menu-item[aria-checked="false"]::after { content: ""; width: 7px; height: 7px; margin-left: 10px; flex-shrink: 0; border-radius: 50%; border: 1.5px solid var(--f-ink-3); }
+.menu-zoom { display: flex; align-items: center; gap: 4px; padding: 4px 6px 4px 12px; }
+.mz-label { flex: 1; color: var(--f-ink-2); font-size: 13.5px; }
+.mz-btn, .mz-val {
+  height: 30px; min-width: 32px; padding: 0 8px; display: inline-grid; place-items: center;
+  border: 1px solid var(--f-glass-edge); border-radius: 9px; background: var(--f-glass); color: var(--f-ink);
+  font: 600 12.5px/1 var(--f-body); cursor: pointer; box-shadow: var(--f-shine);
+}
+.mz-val { min-width: 62px; font-variant-numeric: tabular-nums; }
+.mz-btn:hover, .mz-val:hover { background: var(--f-glass-hover); }
+.mz-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#mz-full { margin-left: 6px; }
+
+/* Recherche dans la page : pastille de verre en haut à droite de la page */
+.findbar {
+  position: absolute; top: 10px; right: 16px; z-index: 40; display: flex; align-items: center; gap: 4px;
+  padding: 6px 6px 6px 12px; border-radius: 14px;
+  background: var(--f-glass-solid); border: 1px solid var(--f-glass-edge); box-shadow: var(--f-shine), var(--f-shadow);
+  -webkit-backdrop-filter: blur(26px) saturate(180%); backdrop-filter: blur(26px) saturate(180%);
+  animation: fadeIn .16s ease;
+}
+.findbar.hidden { display: none; }
+#find-q { width: 220px; height: 30px; border: 0; outline: none; background: transparent; color: var(--f-ink); font: 400 14px/1 var(--f-body); }
+#find-q::placeholder { color: var(--f-ink-3); }
+.find-count { min-width: 64px; text-align: right; padding-right: 6px; color: var(--f-ink-3); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.findbar.none .find-count { color: #F6A58C; }
+.findbar .ico-btn { height: 30px; min-width: 30px; }
+
+/* Historique */
+.hist-day { margin: 14px 0 4px; font: 600 13px/1.2 var(--f-display); letter-spacing: .04em; text-transform: uppercase; color: var(--f-accent-txt); }
+.hist-day:first-of-type { margin-top: 4px; }
+.hist-row { gap: 10px; }
+.hist-row .hist-time { color: var(--f-ink-3); font-size: 12px; font-variant-numeric: tabular-nums; flex-shrink: 0; width: 40px; }
+.hist-row .v { flex: 1; text-align: left; cursor: pointer; overflow: hidden; }
+.hist-row .v:hover { color: var(--f-accent-txt); }
+.hist-row button { opacity: .55; }
+.hist-row:hover button { opacity: 1; }
+.notice { padding: 9px 12px; margin-bottom: 10px; font-size: 12.5px; color: var(--f-ink-2); }
+
+/* Fenêtre privée : lueurs violettes et repère dans la barre d'onglets */
+body.is-private { --f-halo-1: rgba(111,92,240,.75); --f-halo-2: rgba(139,123,255,.55); --f-accent: #8B7BFF; }
+body.is-private .tab.active { box-shadow: var(--f-shine), inset 0 -2px 0 #8B7BFF; }
+.private-badge {
+  display: inline-flex; align-items: center; gap: 6px; align-self: center; flex-shrink: 0; height: 26px; padding: 0 10px; margin: 0 6px 5px 0;
+  border-radius: 999px; background: rgba(139,123,255,.20); border: 1px solid rgba(139,123,255,.45); color: var(--f-ink);
+  font: 600 12px/1 var(--f-body); -webkit-app-region: no-drag;
+}
+.private-badge.hidden { display: none; }
+.private-badge svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* Le flou ne traverse pas une page web (<webview>) : menu et barre de recherche presque opaques */
+.menu, .findbar {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--f-ink) 6%, var(--f-paper)), var(--f-paper));
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+.menu { min-width: 340px; }
+.menu-item span { white-space: nowrap; }
+#btn-downloads { display: none; }   /* doublon : « Téléchargements » est désormais en haut du menu */

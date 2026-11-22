@@ -6,6 +6,15 @@
 - Barres d'onglets et de navigation en verre, barre d'adresse mise en avant, menus et panneaux en verre dense.
 - Page d'accueil refaite : lueurs animées (coupées si « réduire les animations »), recherche en verre, raccourcis en pastilles.
 - Thèmes clair et sombre retravaillés tous les deux ; fond de fenêtre au démarrage aligné.
+- Icône officielle du navigateur sur la page d'accueil (à la place du logo KDL TECH).
+- Barre de favoris sous la barre d'adresse (affichée par défaut, Ctrl+Maj+B) : icône du site, clic molette = nouvel onglet,
+  favoris en trop regroupés dans « Autres favoris ».
+- Menu complet comme Chrome : nouvel onglet, nouvelle fenêtre (Ctrl+N), fenêtre de navigation privée (Ctrl+Maj+N),
+  historique (Ctrl+H, recherche, par jour), téléchargements, gérer les favoris, zoom − / 100 % / + et plein écran (F11),
+  imprimer (Ctrl+P), rechercher dans la page (Ctrl+F), enregistrer la page (Ctrl+S), code source (Ctrl+U), quitter (Ctrl+Q).
+- Fenêtre privée : session en mémoire propre à la fenêtre, effacée à la fermeture, aucun historique, repère violet.
+- Les raccourcis marchent aussi quand la page web a le focus (copier/coller restent à la page). Ctrl+Tab change d'onglet.
+- Textes en français, anglais et espagnol.
 
 ## 1.7.0 — 2026-11-13 — Import des favoris des autres navigateurs
 - Nouveau panneau « Importer des favoris » (Favoris › Importer des favoris…) :
