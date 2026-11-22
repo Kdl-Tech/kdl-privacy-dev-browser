@@ -62,8 +62,8 @@
 
     .brand { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 34px;
       animation: rise .5s cubic-bezier(.2,.7,.2,1) both; }
-    .brand img { width: 150px; height: auto; object-fit: contain; display: block; }
-    .brand .kdl-logo { background: var(--logo-plate); padding: 8px 14px; border-radius: 16px; }
+    .brand .app-icon { width: 128px; height: 128px; display: block;
+      filter: drop-shadow(0 14px 30px rgba(2,8,16,.45)) drop-shadow(0 0 22px rgba(25,179,166,.25)); }
     .title { font-family: "Barlow Semi Condensed", system-ui, sans-serif; font-size: clamp(34px,6vw,56px); font-weight: 700;
       letter-spacing: -.01em; color: var(--text); margin: 0; line-height: 1; }
     .title b { color: var(--accent); font-weight: 700; }
@@ -126,7 +126,7 @@
 
   <main>
     <div class="brand">
-      <span class="kdl-logo"><img src="../assets/kdl-logo-tech.webp" alt="KDL TECH" /></span>
+      <img class="app-icon" src="../assets/icon.svg" alt="" width="128" height="128" />
       <h1 class="title">KDL <b>Privacy</b> Dev Browser</h1>
       <p class="tagline" data-i18n="home.tagline">Navigation privée · outils dev · zéro tracking</p>
     </div>
