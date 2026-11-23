@@ -129,6 +129,14 @@ function wireTab(tab) {
     if (e.level >= 1) { tab.console.push({ level: e.level, message: String(e.message || '').slice(0, 500) }); if (tab.console.length > 40) tab.console.shift(); }
   });
   wv.addEventListener('did-start-loading', () => { tab.console = []; });
+  // Page d'accueil chargée avec un thème périmé : un changement de thème (système ou bouton) arrivé
+  // pendant le tout premier chargement du <webview> est perdu (loadURL refusé avant dom-ready), d'où
+  // une barre sombre au-dessus d'une page d'accueil claire. On recharge alors l'accueil au bon thème.
+  wv.addEventListener('dom-ready', () => {
+    let u = ''; try { u = wv.getURL() || ''; } catch { return; }
+    const m = isHome(u) && /[?&]theme=(dark|light)/.exec(u);
+    if (m && m[1] !== curTheme()) { tab.url = homeURL(); wv.loadURL(tab.url).catch(() => { /* */ }); }
+  });
   wv.addEventListener('page-title-updated', (e) => {
     tab.title = e.title || tab.title;
     if (isActive(tab)) document.title = 'KDL · ' + tab.title;
@@ -204,6 +212,10 @@ if (themeBtn) { themeBtn.onclick = toggleTheme; applyTheme(curTheme(), false); }
 syncThemeNatif();
 if (MQ_SOMBRE) {
   MQ_SOMBRE.addEventListener('change', () => { if (!themeMemorise()) applyTheme(MQ_SOMBRE.matches ? 'dark' : 'light', false); });
+}
+// Changement de thème du système signalé par Electron (seule source fiable sous Linux).
+if (window.kdl && window.kdl.onSystemTheme) {
+  window.kdl.onSystemTheme((sombre) => { if (!themeMemorise() && curTheme() !== (sombre ? 'dark' : 'light')) applyTheme(sombre ? 'dark' : 'light', false); });
 }
 
 // --- Résolution requête : URL directe ou recherche DuckDuckGo ---

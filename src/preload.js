@@ -26,6 +26,8 @@ contextBridge.exposeInMainWorld('kdl', {
   onShortcut: (cb) => ipcRenderer.on('kdl:shortcut', (_e, s) => cb(s)),
   setLang: (lang) => ipcRenderer.invoke('kdl:set-lang', lang),
   setThemeSource: (src) => ipcRenderer.invoke('kdl:theme-source', src),
+  systemDark: () => ipcRenderer.sendSync('kdl:system-dark'),
+  onSystemTheme: (cb) => ipcRenderer.on('kdl:system-theme', (_e, dark) => cb(!!dark)),
   exportFavs: (data) => ipcRenderer.invoke('kdl:export-favs', data),
   importFavs: (kind) => ipcRenderer.invoke('kdl:import-favs', kind === 'html' ? 'html' : 'json'),
   bmDetect: () => ipcRenderer.invoke('kdl:bm-detect'),

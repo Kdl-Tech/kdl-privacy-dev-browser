@@ -48,3 +48,21 @@ test('Electron : nativeTheme.themeSource aligné (system sans choix manuel)', ()
   assert.match(r, /MQ_SOMBRE\.addEventListener\('change', \(\) => \{ if \(!themeMemorise\(\)\)/);
   assert.match(lire('index.html'), /<script src="theme-boot\.js"><\/script>/);
 });
+
+test('Linux : thème système lu via Electron (nativeTheme) avant prefers-color-scheme', () => {
+  // Système sombre vu par Electron alors que prefers-color-scheme dit clair (cas Linux observé 23/11/2026).
+  let m = monde({}, false); m.ctx.kdl = { systemDark: () => true }; lance(m, INIT); assert.equal(m.attrs['data-theme'], 'dark');
+  m = monde({}, true); m.ctx.kdl = { systemDark: () => false }; lance(m, INIT); assert.equal(m.attrs['data-theme'], 'light');
+  m = monde({ 'kdl-theme': 'light' }, false); m.ctx.kdl = { systemDark: () => true }; lance(m, INIT); assert.equal(m.attrs['data-theme'], 'light');
+  m = monde({}, true); m.ctx.kdl = { systemDark: () => null }; lance(m, INIT); assert.equal(m.attrs['data-theme'], 'dark');
+  assert.match(lire('main.js'), /ipcSur\.onSync\('kdl:system-dark', \(\) => nativeTheme\.shouldUseDarkColors\)/);
+  assert.match(lire('main.js'), /nativeTheme\.on\('updated'/);
+  assert.match(lire('preload.js'), /systemDark: \(\) => ipcRenderer\.sendSync\('kdl:system-dark'\)/);
+  assert.match(lire('renderer.js'), /window\.kdl\.onSystemTheme\(/);
+});
+
+test("page d'accueil : rechargée au bon thème si un changement arrive pendant son premier chargement", () => {
+  const r = lire('renderer.js');
+  assert.match(r, /wv\.addEventListener\('dom-ready', \(\) => \{[\s\S]*?isHome\(u\) && \/\[\?&\]theme=\(dark\|light\)\/\.exec\(u\)[\s\S]*?m\[1\] !== curTheme\(\)/);
+});
+

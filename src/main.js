@@ -64,6 +64,15 @@ ipcSur.handle('kdl:theme-source', (_e, src) => {
   nativeTheme.themeSource = ['light', 'dark'].includes(src) ? src : 'system';
   return { themeSource: nativeTheme.themeSource };
 });
+// Thème du système vu par Electron. Sous Linux, prefers-color-scheme reste « light » dans les pages
+// même quand le système est sombre (nativeTheme.shouldUseDarkColors = true) : le renderer lit donc
+// cette valeur au démarrage (synchrone, anti-flash) puis reçoit ses changements.
+ipcSur.onSync('kdl:system-dark', () => nativeTheme.shouldUseDarkColors);
+nativeTheme.on('updated', () => {
+  for (const w of BrowserWindow.getAllWindows()) {
+    try { w.webContents.send('kdl:system-theme', nativeTheme.shouldUseDarkColors); } catch { /* fenêtre fermée */ }
+  }
+});
 
 function createWindow(opts = {}) {
   const priv = !!opts.private;

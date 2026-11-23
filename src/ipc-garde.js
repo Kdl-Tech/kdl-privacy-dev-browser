@@ -30,6 +30,8 @@ function creerIpcSur(ipcMain, options) {
   return {
     handle(canal, fn) { ipcMain.handle(canal, (e, ...a) => { if (!ok(e)) throw new Error('kdl: expéditeur refusé'); return fn(e, ...a); }); },
     on(canal, fn) { ipcMain.on(canal, (e, ...a) => { if (ok(e)) return fn(e, ...a); }); },
+    // Message synchrone (sendSync) : toujours une réponse, null si l'expéditeur est refusé (jamais de blocage).
+    onSync(canal, fn) { ipcMain.on(canal, (e, ...a) => { try { e.returnValue = ok(e) ? fn(e, ...a) : null; } catch { e.returnValue = null; } }); },
   };
 }
 

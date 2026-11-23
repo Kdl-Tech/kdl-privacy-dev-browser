@@ -47,6 +47,15 @@ test('creerIpcSur : handle lève, on ignore pour un expéditeur refusé', async 
   assert.strictEqual(n, 1);
 });
 
+test('creerIpcSur : onSync répond toujours (valeur si accepté, null si refusé)', () => {
+  const o = {};
+  const ipc = creerIpcSur({ handle() {}, on: (c, f) => { o[c] = f; } }, opts);
+  ipc.onSync('kdl:z', () => true);
+  const ok = evt(frame(URL_UI)); o['kdl:z'](ok); assert.strictEqual(ok.returnValue, true);
+  const web = frame('https://evil.example/'); const ko = evt(web, { main: web });
+  o['kdl:z'](ko); assert.strictEqual(ko.returnValue, null);
+});
+
 test('main.js : tous les gestionnaires passent par la garde, fenêtre principale verrouillée sur index.html', () => {
   const m = fs.readFileSync(path.join(__dirname, '..', 'src', 'main.js'), 'utf8');
   assert.strictEqual((m.match(/ipcMain\.(handle|on|once|handleOnce)\(/g) || []).length, 0, 'ipcMain utilisé sans garde');

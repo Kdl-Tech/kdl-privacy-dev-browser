@@ -1,5 +1,10 @@
 # Changelog — KDL Privacy Dev Browser
 
+## 1.8.2 — 23/11/2026 — Thème du système sous Linux
+- Correctif : avec un bureau Linux en mode sombre, l'interface et la page d'accueil restaient claires
+  (sous Linux, Electron signale le système sombre mais les pages voient toujours « clair »).
+  Sans choix mémorisé, le thème suit désormais le système, au démarrage et en direct. Choix manuel inchangé (bouton ☾/☀).
+
 ## 1.8.1 — 22/11/2026 — Bouton « Mettre à jour »
 - Quand une nouvelle version existe, un bouton orange qui clignote apparaît dans la barre d'outils, à gauche du thème :
   « Mise à jour x.y.z… » pendant le téléchargement, puis « Mettre à jour x.y.z » ; un clic installe et redémarre.
