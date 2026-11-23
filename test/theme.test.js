@@ -41,7 +41,7 @@ test('choix manuel mémorisé prioritaire sur le système', () => {
   m = monde({ 'kdl-theme': 'dark' }, false); lance(m, INIT); assert.equal(m.attrs['data-theme'], 'dark');
 });
 test('Electron : nativeTheme.themeSource aligné (system sans choix manuel)', () => {
-  assert.match(lire('main.js'), /ipcMain\.handle\('kdl:theme-source'[\s\S]*?nativeTheme\.themeSource = \['light', 'dark'\]\.includes\(src\) \? src : 'system'/);
+  assert.match(lire('main.js'), /ipcSur\.handle\('kdl:theme-source'[\s\S]*?nativeTheme\.themeSource = \['light', 'dark'\]\.includes\(src\) \? src : 'system'/);
   assert.match(lire('preload.js'), /setThemeSource: \(src\) => ipcRenderer\.invoke\('kdl:theme-source', src\)/);
   const r = lire('renderer.js');
   assert.match(r, /setThemeSource\(themeMemorise\(\) \|\| 'system'\)/);

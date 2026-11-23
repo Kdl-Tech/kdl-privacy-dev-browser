@@ -10,6 +10,11 @@ const { execFile } = require('child_process');
 const { isThirdParty, shouldBlock } = require('./privacy');
 const I18N = require('./i18n');
 const Bookmarks = require('./bookmarks-import');
+// Garde IPC : seule la frame principale de src/index.html peut appeler le processus principal.
+const ipcSur = require('./ipc-garde').creerIpcSur(ipcMain, {
+  page: path.join(__dirname, 'index.html'),
+  estFenetre: (wc) => !!BrowserWindow.fromWebContents(wc),
+});
 const tr = I18N.t;
 
 const isDev = process.argv.includes('--dev');
@@ -53,9 +58,9 @@ if (!gotSingleInstanceLock) {
 }
 
 // Langue de l'interface : langue du système par défaut, puis celle choisie dans le renderer.
-ipcMain.handle('kdl:set-lang', (_e, lang) => ({ lang: I18N.setLang(lang) }));
+ipcSur.handle('kdl:set-lang', (_e, lang) => ({ lang: I18N.setLang(lang) }));
 // Thème : « system » tant que l'utilisateur n'a rien choisi, sinon son choix (light / dark).
-ipcMain.handle('kdl:theme-source', (_e, src) => {
+ipcSur.handle('kdl:theme-source', (_e, src) => {
   nativeTheme.themeSource = ['light', 'dark'].includes(src) ? src : 'system';
   return { themeSource: nativeTheme.themeSource };
 });
@@ -93,6 +98,10 @@ function createWindow(opts = {}) {
     wp.contextIsolation = true; wp.sandbox = true; wp.webSecurity = true;
     params.partition = part;
   });
+
+  // La fenêtre principale ne quitte jamais src/index.html (lien glissé sur la barre d'outils, redirection…).
+  win.webContents.on('will-navigate', (ev) => ev.preventDefault());
+  win.webContents.on('will-redirect', (ev) => ev.preventDefault());
 
   win.removeMenu();
   win.loadFile(path.join(__dirname, 'index.html'), priv ? { query: { private: '1' } } : undefined);
@@ -261,8 +270,8 @@ function majSignaler(etat, version) {
   majEtat = { etat, version: version ? String(version).slice(0, 40) : null };
   for (const w of BrowserWindow.getAllWindows()) { try { w.webContents.send('kdl:maj', majEtat); } catch { /* fenêtre fermée */ } }
 }
-ipcMain.handle('kdl:maj-etat', () => majEtat);
-ipcMain.handle('kdl:maj-installer', () => {
+ipcSur.handle('kdl:maj-etat', () => majEtat);
+ipcSur.handle('kdl:maj-installer', () => {
   if (!majUpdater) return { ok: false, raison: 'dev' };
   if (majEtat.etat !== 'telechargee') return { ok: false, raison: majEtat.etat === 'disponible' ? 'en_cours' : 'a_jour' };
   setImmediate(() => majUpdater.quitAndInstall());
@@ -271,7 +280,7 @@ ipcMain.handle('kdl:maj-installer', () => {
 
 // « Effacer à la fermeture » : fiable ici (le beforeunload du renderer n'attend pas l'IPC async).
 let clearOnClose = false, clearedOnQuit = false;
-ipcMain.handle('kdl:clear-on-close', (_e, on) => { clearOnClose = !!on; return { ok: true }; });
+ipcSur.handle('kdl:clear-on-close', (_e, on) => { clearOnClose = !!on; return { ok: true }; });
 app.on('before-quit', (e) => {
   if (!clearOnClose || clearedOnQuit) return;
   e.preventDefault(); clearedOnQuit = true;
@@ -290,7 +299,7 @@ app.on('window-all-closed', () => {
 // Nettoyer les données du site courant (cache + storage) — sur la session de navigation
 // (persist:kdl), pas defaultSession : c'est là que vivent réellement cookies/cache des pages.
 // Les favoris/préférences (localStorage de l'UI = defaultSession) ne sont donc pas touchés.
-ipcMain.handle('kdl:clear-site-data', async (_e, origin) => {
+ipcSur.handle('kdl:clear-site-data', async (_e, origin) => {
   const ses = browseSession();
   const opts = { storages: ['cookies', 'localstorage', 'caches', 'cachestorage', 'indexdb', 'serviceworkers', 'shadercache', 'websql'] };
   if (origin) opts.origin = origin;
@@ -300,7 +309,7 @@ ipcMain.handle('kdl:clear-site-data', async (_e, origin) => {
 });
 
 // Effacer toutes les données de navigation (fermeture / bouton) — persist:kdl uniquement.
-ipcMain.handle('kdl:clear-all', async () => {
+ipcSur.handle('kdl:clear-all', async () => {
   const ses = browseSession();
   await ses.clearStorageData();
   await ses.clearCache();
@@ -308,20 +317,20 @@ ipcMain.handle('kdl:clear-all', async () => {
 });
 
 // Ouverture externe contrôlée (lien GitHub « À propos », etc.).
-ipcMain.handle('kdl:open-external', (_e, url) => {
+ipcSur.handle('kdl:open-external', (_e, url) => {
   if (/^https?:\/\//i.test(url)) { shell.openExternal(url); return { ok: true }; }
   return { ok: false };
 });
 
 // Métadonnées « À propos ».
 // Fenêtres, plein écran, quitter, enregistrer la page (menu « comme Chrome »).
-ipcMain.handle('kdl:new-window', (_e, priv) => { createWindow({ private: !!priv }); return { ok: true }; });
-ipcMain.handle('kdl:fullscreen', (e) => {
+ipcSur.handle('kdl:new-window', (_e, priv) => { createWindow({ private: !!priv }); return { ok: true }; });
+ipcSur.handle('kdl:fullscreen', (e) => {
   const w = BrowserWindow.fromWebContents(e.sender); if (!w) return { ok: false };
   w.setFullScreen(!w.isFullScreen()); return { ok: true, on: w.isFullScreen() };
 });
-ipcMain.handle('kdl:quit', () => { app.quit(); return { ok: true }; });
-ipcMain.handle('kdl:save-page', async (e, wcId) => {
+ipcSur.handle('kdl:quit', () => { app.quit(); return { ok: true }; });
+ipcSur.handle('kdl:save-page', async (e, wcId) => {
   const wc = webContents.fromId(Number(wcId));
   if (!wc || wc.isDestroyed() || wc.getType() !== 'webview' || wc.hostWebContents !== e.sender) return { ok: false };
   const base = (wc.getTitle() || 'page').replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || 'page';
@@ -334,10 +343,10 @@ ipcMain.handle('kdl:save-page', async (e, wcId) => {
   catch (err) { return { ok: false, error: String(err && err.message || err) }; }
 });
 
-ipcMain.handle('kdl:about', () => ({ name: 'KDL Privacy Dev Browser', version: app.getVersion() }));
+ipcSur.handle('kdl:about', () => ({ name: 'KDL Privacy Dev Browser', version: app.getVersion() }));
 
 // Export favoris -> fichier JSON local (aucun cloud).
-ipcMain.handle('kdl:export-favs', async (_e, data) => {
+ipcSur.handle('kdl:export-favs', async (_e, data) => {
   const { canceled, filePath } = await dialog.showSaveDialog(dlgParent(), {
     title: tr('dlg.exportFavs'),
     defaultPath: path.join(app.getPath('desktop'), 'kdl-favoris.json'),
@@ -350,7 +359,7 @@ ipcMain.handle('kdl:export-favs', async (_e, data) => {
 
 // Import favoris : fichier local choisi par l'utilisateur — JSON KDL ou HTML (format Netscape,
 // exporté par tous les navigateurs). Renvoie des favoris nettoyés ; fusion côté renderer.
-ipcMain.handle('kdl:import-favs', async (_e, kind) => {
+ipcSur.handle('kdl:import-favs', async (_e, kind) => {
   const html = kind === 'html';
   const { canceled, filePaths } = await dialog.showOpenDialog(dlgParent(), {
     title: tr('dlg.importFavs'), properties: ['openFile'],
@@ -364,7 +373,7 @@ ipcMain.handle('kdl:import-favs', async (_e, kind) => {
 // Favoris des autres navigateurs installés (Chrome, Edge, Brave, Opera, Vivaldi, Chromium, Firefox).
 // Lecture 100 % locale ; les chemins restent ici, le renderer ne connaît que des identifiants.
 let bmSources = new Map();
-ipcMain.handle('kdl:bm-detect', async () => {
+ipcSur.handle('kdl:bm-detect', async () => {
   let found = [];
   try { found = Bookmarks.detectSources(); } catch { found = []; }
   bmSources = new Map(found.map((s) => [s.id, s]));
@@ -375,7 +384,7 @@ ipcMain.handle('kdl:bm-detect', async () => {
     return { id: s.id, browserId: s.browserId, browser: s.browser, profile: s.profile, kind: s.kind, count, error };
   });
 });
-ipcMain.handle('kdl:bm-read', async (_e, ids) => {
+ipcSur.handle('kdl:bm-read', async (_e, ids) => {
   const items = []; let failed = 0;
   for (const id of Array.isArray(ids) ? ids.slice(0, 64) : []) {
     const s = bmSources.get(String(id));
@@ -387,7 +396,7 @@ ipcMain.handle('kdl:bm-read', async (_e, ids) => {
 
 // Enregistrement local d'un texte (export Markdown du mode lecture, etc.).
 // Aucun cloud ; dialogue natif ; l'utilisateur choisit la destination.
-ipcMain.handle('kdl:save-text', async (_e, { name, content } = {}) => {
+ipcSur.handle('kdl:save-text', async (_e, { name, content } = {}) => {
   if (typeof content !== 'string') return { ok: false, error: tr('err.badContent') };
   const safe = (name || 'kdl-export.txt').replace(/[^\w.\- ]+/g, '_').slice(0, 120);
   const { canceled, filePath } = await dialog.showSaveDialog(dlgParent(), {
@@ -399,7 +408,7 @@ ipcMain.handle('kdl:save-text', async (_e, { name, content } = {}) => {
 });
 
 // Capture d'écran de la page (webContents du <webview>).
-ipcMain.handle('kdl:screenshot', async (_e, wcId) => {
+ipcSur.handle('kdl:screenshot', async (_e, wcId) => {
   try {
     const wc = webContents.fromId(wcId);
     if (!wc) return { ok: false, error: tr('err.noWc') };
@@ -414,15 +423,15 @@ ipcMain.handle('kdl:screenshot', async (_e, wcId) => {
   }
 });
 
-ipcMain.handle('kdl:trackers', async (_e, enabled) => { blockTrackers = enabled !== false; return { ok: true, enabled: blockTrackers }; });
-ipcMain.handle('kdl:trackers-count', async (_e, wcId) => {
+ipcSur.handle('kdl:trackers', async (_e, enabled) => { blockTrackers = enabled !== false; return { ok: true, enabled: blockTrackers }; });
+ipcSur.handle('kdl:trackers-count', async (_e, wcId) => {
   const c = blockedCount.get(Number(wcId));
   let top = '';
   try { const { webContents } = require('electron'); const wc = webContents.fromId(Number(wcId)); top = wc ? wc.getURL() : ''; } catch { /* */ }
   return { enabled: blockTrackers, count: c && c.top === top ? c.n : 0, list: TRACKERS.size };
 });
 
-ipcMain.handle('kdl:third-party-cookies', async (_e, enabled) => {
+ipcSur.handle('kdl:third-party-cookies', async (_e, enabled) => {
   return { ok: true, blocked: setThirdPartyCookieBlock(enabled) };
 });
 
@@ -450,7 +459,7 @@ function ollamaRequest(pathName, body, timeoutMs = 4000) {
 }
 
 // Détection : service local présent ? liste des modèles déjà installés (aucun pull).
-ipcMain.handle('kdl:ollama-detect', async () => {
+ipcSur.handle('kdl:ollama-detect', async () => {
   const r = await ollamaRequest('/api/tags', null, 2500);
   if (!r.ok) return { available: false, error: r.error };
   const models = Array.isArray(r.data.models) ? r.data.models.map((m) => m.name) : [];
@@ -458,7 +467,7 @@ ipcMain.handle('kdl:ollama-detect', async () => {
 });
 
 // Génération via un modèle Ollama DÉJÀ installé, choisi par l'utilisateur. Local only.
-ipcMain.handle('kdl:ollama-generate', async (_e, { model, prompt, num_predict } = {}) => {
+ipcSur.handle('kdl:ollama-generate', async (_e, { model, prompt, num_predict } = {}) => {
   if (!model || !prompt) return { ok: false, error: tr('err.missingParams') };
   const r = await ollamaRequest('/api/generate', {
     model, prompt, stream: false,
@@ -469,7 +478,7 @@ ipcMain.handle('kdl:ollama-generate', async (_e, { model, prompt, num_predict } 
 });
 
 // ─── IA Lite — gestion du modèle local (fichiers) ──────────────────────────
-ipcMain.handle('kdl:ai-model-info', async () => {
+ipcSur.handle('kdl:ai-model-info', async () => {
   const dir = AI_MODELS_DIR();
   let installed = [];
   try {
@@ -491,7 +500,7 @@ ipcMain.handle('kdl:ai-model-info', async () => {
   return { dir, downloadAllowed: AI_DOWNLOAD_ALLOWED(), installed };
 });
 
-ipcMain.handle('kdl:ai-model-delete', async (_e, id) => {
+ipcSur.handle('kdl:ai-model-delete', async (_e, id) => {
   if (!id || /[/\\.]{2}/.test(id)) return { ok: false, error: tr('err.badId') };
   const p = path.join(AI_MODELS_DIR(), path.basename(id));
   try { if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true }); return { ok: true }; }
@@ -499,7 +508,7 @@ ipcMain.handle('kdl:ai-model-delete', async (_e, id) => {
 });
 
 // Téléchargement du modèle : GATÉ. Ne s'exécute jamais sans autorisation explicite.
-ipcMain.handle('kdl:ai-model-download', async (_e, { id } = {}) => {
+ipcSur.handle('kdl:ai-model-download', async (_e, { id } = {}) => {
   if (!AI_DOWNLOAD_ALLOWED()) {
     return { ok: false, needAuth: true,
       message: tr('err.dlDisabled') };
@@ -534,14 +543,14 @@ const BYOK_PROVIDERS = {
 
 function readByok() { try { return JSON.parse(fs.readFileSync(BYOK_FILE(), 'utf8')); } catch { return null; } }
 
-ipcMain.handle('kdl:byok-config', async () => {
+ipcSur.handle('kdl:byok-config', async () => {
   const c = readByok();
   const providers = Object.entries(BYOK_PROVIDERS).map(([id, p]) => ({ id, label: id === 'custom' ? tr('byok.custom') : p.label, defaultModel: p.defaultModel }));
   if (!c) return { configured: false, providers };
   return { configured: true, provider: c.provider, model: c.model, baseUrl: c.baseUrl || '', hasKey: !!c.key, providers };
 });
 
-ipcMain.handle('kdl:byok-set', async (_e, { provider, model, key, baseUrl } = {}) => {
+ipcSur.handle('kdl:byok-set', async (_e, { provider, model, key, baseUrl } = {}) => {
   if (!BYOK_PROVIDERS[provider]) return { ok: false, error: tr('err.unknownProvider') };
   const prev = readByok() || {};
   const cfg = {
@@ -556,7 +565,7 @@ ipcMain.handle('kdl:byok-set', async (_e, { provider, model, key, baseUrl } = {}
   return { ok: true };
 });
 
-ipcMain.handle('kdl:byok-clear', async () => {
+ipcSur.handle('kdl:byok-clear', async () => {
   try { if (fs.existsSync(BYOK_FILE())) fs.unlinkSync(BYOK_FILE()); return { ok: true }; }
   catch (err) { return { ok: false, error: String(err) }; }
 });
@@ -576,7 +585,7 @@ function httpsJson(urlStr, { method = 'POST', headers = {}, body } = {}, timeout
   });
 }
 
-ipcMain.handle('kdl:byok-generate', async (_e, { prompt, maxTokens } = {}) => {
+ipcSur.handle('kdl:byok-generate', async (_e, { prompt, maxTokens } = {}) => {
   const c = readByok();
   if (!c || !c.key) return { ok: false, error: tr('err.noByok') };
   if (typeof prompt !== 'string' || !prompt) return { ok: false, error: tr('err.noPrompt') };
@@ -672,14 +681,14 @@ function startDownload(item) {
   });
 }
 
-ipcMain.handle('kdl:dl-list', async () => loadDlHistory());
-ipcMain.handle('kdl:dl-pause', async (_e, id) => { const a = dlActive.get(id); if (a) a.item.pause(); return { ok: !!a }; });
-ipcMain.handle('kdl:dl-resume', async (_e, id) => { const a = dlActive.get(id); if (a && a.item.canResume()) a.item.resume(); return { ok: !!a }; });
-ipcMain.handle('kdl:dl-cancel', async (_e, id) => { const a = dlActive.get(id); if (a) a.item.cancel(); return { ok: !!a }; });
-ipcMain.handle('kdl:dl-open', async (_e, id) => { const r = loadDlHistory().find((x) => x.id === id); if (r && r.state === 'completed' && fs.existsSync(r.path)) { shell.openPath(r.path); return { ok: true }; } return { ok: false }; });
-ipcMain.handle('kdl:dl-folder', async (_e, id) => { const r = loadDlHistory().find((x) => x.id === id); if (r && fs.existsSync(r.path)) { shell.showItemInFolder(r.path); return { ok: true }; } shell.openPath(DL_DIR); return { ok: true }; });
-ipcMain.handle('kdl:dl-remove', async (_e, id) => { dlHistory = loadDlHistory().filter((x) => x.id !== id); saveDlHistory(); return { ok: true }; });
-ipcMain.handle('kdl:dl-clear', async () => { const a = [...dlActive.keys()]; dlHistory = loadDlHistory().filter((x) => a.includes(x.id)); saveDlHistory(); return { ok: true }; });
+ipcSur.handle('kdl:dl-list', async () => loadDlHistory());
+ipcSur.handle('kdl:dl-pause', async (_e, id) => { const a = dlActive.get(id); if (a) a.item.pause(); return { ok: !!a }; });
+ipcSur.handle('kdl:dl-resume', async (_e, id) => { const a = dlActive.get(id); if (a && a.item.canResume()) a.item.resume(); return { ok: !!a }; });
+ipcSur.handle('kdl:dl-cancel', async (_e, id) => { const a = dlActive.get(id); if (a) a.item.cancel(); return { ok: !!a }; });
+ipcSur.handle('kdl:dl-open', async (_e, id) => { const r = loadDlHistory().find((x) => x.id === id); if (r && r.state === 'completed' && fs.existsSync(r.path)) { shell.openPath(r.path); return { ok: true }; } return { ok: false }; });
+ipcSur.handle('kdl:dl-folder', async (_e, id) => { const r = loadDlHistory().find((x) => x.id === id); if (r && fs.existsSync(r.path)) { shell.showItemInFolder(r.path); return { ok: true }; } shell.openPath(DL_DIR); return { ok: true }; });
+ipcSur.handle('kdl:dl-remove', async (_e, id) => { dlHistory = loadDlHistory().filter((x) => x.id !== id); saveDlHistory(); return { ok: true }; });
+ipcSur.handle('kdl:dl-clear', async () => { const a = [...dlActive.keys()]; dlHistory = loadDlHistory().filter((x) => a.includes(x.id)); saveDlHistory(); return { ok: true }; });
 // ─── Centre de confidentialité — permissions par site + cookies/données ────
 const PERM_FILE = () => path.join(app.getPath('userData'), 'permissions.json');
 let permStore = null;
@@ -687,18 +696,18 @@ function loadPerms() { if (permStore) return permStore; try { permStore = JSON.p
 function savePerms() { try { fs.writeFileSync(PERM_FILE(), JSON.stringify(permStore)); } catch { /* */ } }
 function getPerm(origin, name) { const s = loadPerms(); return (s[origin] && s[origin][name]) || null; }
 
-ipcMain.handle('kdl:perm-get', async (_e, origin) => (loadPerms()[origin] || {}));
-ipcMain.handle('kdl:perm-set', async (_e, { origin, name, value }) => {
+ipcSur.handle('kdl:perm-get', async (_e, origin) => (loadPerms()[origin] || {}));
+ipcSur.handle('kdl:perm-set', async (_e, { origin, name, value }) => {
   const s = loadPerms(); if (!origin || !name) return { ok: false };
   s[origin] = s[origin] || {};
   if (value === 'default' || value == null) delete s[origin][name]; else s[origin][name] = value;
   if (!Object.keys(s[origin]).length) delete s[origin];
   savePerms(); return { ok: true };
 });
-ipcMain.handle('kdl:perm-reset', async (_e, origin) => { const s = loadPerms(); delete s[origin]; savePerms(); return { ok: true }; });
+ipcSur.handle('kdl:perm-reset', async (_e, origin) => { const s = loadPerms(); delete s[origin]; savePerms(); return { ok: true }; });
 
 // Infos site : cookies + estimation stockage (session de navigation persist:kdl).
-ipcMain.handle('kdl:site-info', async (_e, origin) => {
+ipcSur.handle('kdl:site-info', async (_e, origin) => {
   const ses = browseSession();
   let cookies = 0;
   try { const c = await ses.cookies.get(origin ? { domain: new URL(origin).hostname } : {}); cookies = c.length; } catch { /* */ }
@@ -706,7 +715,7 @@ ipcMain.handle('kdl:site-info', async (_e, origin) => {
   return { cookies, perms };
 });
 // Effacer cookies d'un site (sans toucher aux favoris/préférences UI).
-ipcMain.handle('kdl:site-clear-cookies', async (_e, origin) => {
+ipcSur.handle('kdl:site-clear-cookies', async (_e, origin) => {
   const ses = browseSession();
   try {
     const host = origin ? new URL(origin).hostname : null;
@@ -719,7 +728,7 @@ ipcMain.handle('kdl:site-clear-cookies', async (_e, origin) => {
   } catch (err) { return { ok: false, error: String(err) }; }
 });
 
-ipcMain.handle('kdl:dl-hash', async (_e, id) => {
+ipcSur.handle('kdl:dl-hash', async (_e, id) => {
   const r = loadDlHistory().find((x) => x.id === id);
   if (!r || !fs.existsSync(r.path)) return { ok: false, error: tr('err.fileNotFound') };
   return await new Promise((resolve) => {
@@ -731,12 +740,12 @@ ipcMain.handle('kdl:dl-hash', async (_e, id) => {
 });
 
 // Détection Tor Browser sur Linux (lecture seule, aucune installation).
-ipcMain.handle('kdl:detect-tor', async () => {
+ipcSur.handle('kdl:detect-tor', async () => {
   return detectTor();
 });
 
 // Ouvrir une URL .onion / recherche avec Tor Browser si présent.
-ipcMain.handle('kdl:open-tor', async (_e, url) => {
+ipcSur.handle('kdl:open-tor', async (_e, url) => {
   const tor = await detectTor();
   if (!tor.found) return { ok: false, error: tr('tor.notDetected') };
   try {
@@ -851,13 +860,13 @@ async function tdlTakeOver(url, referrer) {
   if (!r.ok) { tdlBypass.add(url); browseSession().downloadURL(url); }   // repli : gestionnaire intégré
 }
 
-ipcMain.handle('kdl:tdl-status', async () => {
+ipcSur.handle('kdl:tdl-status', async () => {
   const r = await tdlPost('/ping', {}, 2500);
   return { running: !!r.ok, version: r.version || '', intercept: !!tdlConfig().intercept };
 });
-ipcMain.handle('kdl:tdl-send', async (_e, { url, referrer } = {}) => tdlSend(url, referrer));
-ipcMain.handle('kdl:tdl-intercept', async (_e, on) => { tdlConfig().intercept = !!on; tdlSave(); return { ok: true, intercept: !!on }; });
-ipcMain.handle('kdl:tdl-launch', async () => {
+ipcSur.handle('kdl:tdl-send', async (_e, { url, referrer } = {}) => tdlSend(url, referrer));
+ipcSur.handle('kdl:tdl-intercept', async (_e, on) => { tdlConfig().intercept = !!on; tdlSave(); return { ok: true, intercept: !!on }; });
+ipcSur.handle('kdl:tdl-launch', async () => {
   const cands = [path.join(os.homedir(), 'Desktop', 'TurboDL.exe'), path.join(os.homedir(), 'Bureau', 'TurboDL.exe'),
     path.join(process.env.LOCALAPPDATA || '', 'Programs', 'TurboDL', 'TurboDL.exe')];
   const exe = cands.find((p) => p && fs.existsSync(p));
