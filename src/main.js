@@ -224,11 +224,17 @@ app.whenReady().then(() => {
   createWindow();
 
   // Mise à jour automatique via GitHub Releases (uniquement en version installée).
+  // electron-updater vérifie l'empreinte SHA-512 publiée (latest.yml) avant d'installer.
+  // L'état est aussi montré dans la barre d'outils : bouton « Mettre à jour » qui pulse.
   if (app.isPackaged) {
     try {
       const { autoUpdater } = require('electron-updater');
+      majUpdater = autoUpdater;
       autoUpdater.autoDownload = true;
+      autoUpdater.on('update-available', (info) => majSignaler('disponible', info && info.version));
+      autoUpdater.on('error', () => { if (majEtat.etat === 'disponible') majSignaler('aucune', null); });
       autoUpdater.on('update-downloaded', (info) => {
+        majSignaler('telechargee', info && info.version);
         dialog.showMessageBox({
           type: 'info', buttons: [tr('upd.restart'), tr('upd.later')], defaultId: 0,
           title: tr('upd.title'),
@@ -237,12 +243,30 @@ app.whenReady().then(() => {
         }).then((r) => { if (r.response === 0) autoUpdater.quitAndInstall(); });
       });
       autoUpdater.checkForUpdatesAndNotify();
+      // Navigateur laissé ouvert des jours : nouvelle vérification toutes les 6 h.
+      setInterval(() => { if (majEtat.etat === 'aucune') autoUpdater.checkForUpdates().catch(() => {}); }, 6 * 3600 * 1000);
     } catch { /* electron-updater indisponible : démarrage normal */ }
   }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+// Mise à jour : état partagé avec la barre d'outils (bouton qui pulse, règle KDL TECH 22/11/2026).
+//   aucune → disponible (téléchargement en cours) → telechargee (un clic : installer et redémarrer).
+let majUpdater = null;
+let majEtat = { etat: 'aucune', version: null };
+function majSignaler(etat, version) {
+  majEtat = { etat, version: version ? String(version).slice(0, 40) : null };
+  for (const w of BrowserWindow.getAllWindows()) { try { w.webContents.send('kdl:maj', majEtat); } catch { /* fenêtre fermée */ } }
+}
+ipcMain.handle('kdl:maj-etat', () => majEtat);
+ipcMain.handle('kdl:maj-installer', () => {
+  if (!majUpdater) return { ok: false, raison: 'dev' };
+  if (majEtat.etat !== 'telechargee') return { ok: false, raison: majEtat.etat === 'disponible' ? 'en_cours' : 'a_jour' };
+  setImmediate(() => majUpdater.quitAndInstall());
+  return { ok: true };
 });
 
 // « Effacer à la fermeture » : fiable ici (le beforeunload du renderer n'attend pas l'IPC async).

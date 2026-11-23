@@ -1,5 +1,12 @@
 # Changelog — KDL Privacy Dev Browser
 
+## 1.8.1 — 22/11/2026 — Bouton « Mettre à jour »
+- Quand une nouvelle version existe, un bouton orange qui clignote apparaît dans la barre d'outils, à gauche du thème :
+  « Mise à jour x.y.z… » pendant le téléchargement, puis « Mettre à jour x.y.z » ; un clic installe et redémarre.
+  La fenêtre « Redémarrer maintenant / Plus tard » reste proposée ; choisir « Plus tard » ne fait plus disparaître l'information.
+- Nouvelle vérification toutes les 6 h si le navigateur reste ouvert. Mêmes couleurs en clair et sombre,
+  contour fixe si « réduire les animations ». Textes FR / EN / ES.
+
 ## 1.8.0 — 22/11/2026 — Style F KDL TECH
 - Nouvelle apparence, la même que kdl-tech.fr : verre sombre sur lueurs colorées, titres Barlow Semi Condensed,
   texte Source Sans 3 (polices locales, licence OFL), action principale en bouton doré.

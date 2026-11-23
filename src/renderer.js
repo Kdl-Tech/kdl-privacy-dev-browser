@@ -1100,3 +1100,30 @@ window.KDLReader.setAIHook(async (kind, text) => {
 // --- Démarrage : un onglet d'accueil ---
 createTab(HOME);
 urlbar.focus();
+
+// Mise à jour : bouton visible et pulsé dès qu'une version est disponible ou téléchargée
+// (règle KDL TECH 22/11/2026). Téléchargée → un clic installe et redémarre le navigateur.
+(function () {
+  const btn = document.getElementById('btn-maj');
+  const lib = document.getElementById('maj-lib');
+  if (!btn || !lib || !window.kdl || !window.kdl.majEtat) return;
+  let etat = { etat: 'aucune', version: null };
+  function peindre(s) {
+    if (s && typeof s.etat === 'string') etat = s;
+    const prete = etat.etat === 'telechargee';
+    btn.hidden = !(prete || etat.etat === 'disponible');
+    btn.classList.toggle('maj-prete', prete);
+    const v = { v: etat.version || '' };
+    lib.textContent = prete ? tr('maj.btnPret', v) : tr('maj.btnDl', v);
+    const titre = prete ? tr('maj.titlePret') : tr('maj.titleDl');
+    btn.title = titre;
+    btn.setAttribute('aria-label', titre);
+  }
+  btn.onclick = async () => {
+    const r = await window.kdl.majInstaller().catch(() => null);
+    if (r && r.ok) toast(tr('maj.redemarrage'));
+    else if (r && r.raison === 'en_cours') toast(tr('maj.enCours'));
+  };
+  window.kdl.onMaj(peindre);
+  window.kdl.majEtat().then(peindre).catch(() => {});
+})();
